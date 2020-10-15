@@ -40,7 +40,7 @@ layout = [[sg.Menu(menu_def, tearoff=True)],
           ]
 
 # Create the Window
-window = sg.Window('Tree Wires labeler', layout, return_keyboard_events=True, use_default_focus=False).Finalize()
+window = sg.Window('Street Level Imagery Labeler - SLIL', layout, return_keyboard_events=True, use_default_focus=False).Finalize()
 
 current_sample_index = -1
 

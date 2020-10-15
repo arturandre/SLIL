@@ -76,3 +76,21 @@ opened summary file. Notice that entries already fulfilled in the
 current summary file will be ignored. Furthermore, entries that
 only exist in the exported file will also be ignored.
 
+## Ok, but can I annotate other things?
+
+Yes, you can! But be careful and avoid opening
+a summary file that has different labels.
+
+To change the labels showing in the application you can set
+the variable **labels** in the file *summarymanager_config.txt*.
+That is a comma-separated list, so you can change the current
+labels, or insert new ones by appending a new label with a comma.
+For example, you can add the label 'Car' after 'Intersetion'
+by setting **labels** from
+
+`labels = 'Tree,Pole w/ wire,Intersection'`
+
+to
+
+`labels = 'Tree,Pole w/ wire,Intersection,Cars'`.
+

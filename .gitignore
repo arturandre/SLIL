@@ -1,0 +1,14 @@
+venv/
+.idea/
+__pycache__/
+.ipynb_checkpoints/
+
+*.log
+*.bat
+*.bak
+*.data*
+*.index
+*.csv
+*~
+*.ipynb
+*.tar

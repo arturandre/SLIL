@@ -1,0 +1,25 @@
+# Use quotes (e.g. 'name with whitespace')
+# for delimiting strings with whitespace or
+# special characters
+
+# Files will be saved with this name.
+# If a file with this name (and .smr extension)
+# already exists then a _N will be appended.
+# N is the lowest integer (starting with 1)
+# that doesn't exists in the folder, that is
+# if labelgui.smr and labelgui_1.smr already exists
+# in the pictures folder then labelgui_2.smr will be
+# created.
+summary_filename_no_ext = 'summan'
+
+# The extension to be used in the summary file.
+# Notice it must contain the dot
+summary_filename_ext = '.smr'
+
+# The labels to be created. Notice that this
+# changing labels for a already existing summary
+# is not possible without editing it externally.
+labels = 'Tree,Pole w/ wire,Intersection'
+
+# The exported summary default name
+export_summary_basename = 'exported'

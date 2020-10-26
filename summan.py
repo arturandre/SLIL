@@ -5,10 +5,25 @@ import pandas as pd
 
 
 class SummaryManager:
-    def __init__(self):
+    def __init__(self, custom_config={}):
         self.current_labelgui_summary_dirpath = None
         self.current_labelgui_summary_filepath = None
         self.current_labelgui_summary = None
+        
+        # custom configs
+        self.summary_filename_no_ext = \
+            custom_config.get('summary_filename_no_ext')\
+            | SummaryManager.summary_filename_no_ext
+        self.summary_filename_ext = \
+            custom_config.get('summary_filename_ext')\
+            | SummaryManager.summary_filename_ext
+        self.labels = custom_config.get('labels')\
+            | SummaryManager.labels
+        self.export_summary_basename =\
+            custom_config.export_summary_basename('labels')\
+            | SummaryManager.export_summary_basename
+
+
         self.unsaved = False
         self.img_filenames = []
         pass
@@ -34,7 +49,7 @@ class SummaryManager:
             f",timestamp"
             f",status"
         )
-        for label in SummaryManager.labels:
+        for label in self.labels:
             headers += f",{label}"
         return headers
 
@@ -47,7 +62,7 @@ class SummaryManager:
         if self.is_summary_loaded():
             return self.current_labelgui_summary[
                 self.current_labelgui_summary[
-                    SummaryManager.labels[0]
+                    self.labels[0]
                     ] != '-1']
 
 
@@ -72,7 +87,7 @@ class SummaryManager:
         if self.current_labelgui_summary_dirpath is not None:
             summary_filename = os.path.join(
                 self.current_labelgui_summary_dirpath,
-                SummaryManager.summary_filename
+                self.summary_filename
                 )
             return summary_filename
         else:
@@ -129,17 +144,17 @@ class SummaryManager:
         if self.is_summary_loaded():
             if os.path.isfile(import_summary_filepath):
                 merge_df = self._load_csv(import_summary_filepath)
-                indices = merge_df[merge_df[SummaryManager.labels[0]] != -1].index
+                indices = merge_df[merge_df[self.labels[0]] != -1].index
                 for index in indices:
                     if index in self.current_labelgui_summary.index:
                         # Notice that here we update an unlabeled
                         # entry, even if this entry were not exported!
                         if (int(
                             self.current_labelgui_summary.\
-                            loc[index][SummaryManager.labels[0]]) == -1) \
+                            loc[index][self.labels[0]]) == -1) \
                             and\
                             (int(merge_df.\
-                                loc[index][SummaryManager.labels[0]]) != -1):
+                                loc[index][self.labels[0]]) != -1):
                             self.current_labelgui_summary.\
                                 loc[index] = merge_df.loc[index]
                 self.override_summary()
@@ -188,9 +203,9 @@ class SummaryManager:
             while True:
                 new_path = os.path.join(
                     self.current_labelgui_summary_dirpath,
-                    f"{SummaryManager.export_summary_basename}_" + \
+                    f"{self.export_summary_basename}_" + \
                     f"{exported_try}" + \
-                    f"{SummaryManager.summary_filename_ext}"
+                    f"{self.summary_filename_ext}"
                 )
                 if not os.path.exists(new_path):
                     Path(new_path).mkdir(parents=True, exist_ok=False)
@@ -279,7 +294,7 @@ class SummaryManager:
         dt1 = pd.read_csv(source_summary, index_col=0, sep=',')
         dt2 = pd.read_csv(target_summary, index_col=0, sep=',')
         if only_labeled:
-            dt1 = dt1[dt1[SummaryManager.labels[0]] != -1]
+            dt1 = dt1[dt1[self.labels[0]] != -1]
         #labeled_samples2 = dt2[labels[0] != -1].copy()
         for sample in dt1.index.values:
             samplein = sample in dt2.index
@@ -334,7 +349,7 @@ class SummaryManager:
 
                     # -1 (N/A), 0 - Not present, 1 - Present
                     labels_str = '-1'
-                    for _ in SummaryManager.labels[1:]:
+                    for _ in self.labels[1:]:
                         labels_str += f',-1'
                     # v2: img_name, lat(missing), lon(missing), heading, pitch, timestamp(missing), status, labels...
                     summary_line = (

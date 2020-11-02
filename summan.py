@@ -9,19 +9,22 @@ class SummaryManager:
         self.current_labelgui_summary_dirpath = None
         self.current_labelgui_summary_filepath = None
         self.current_labelgui_summary = None
-        
         # custom configs
         self.summary_filename_no_ext = \
             custom_config.get('summary_filename_no_ext')\
-            | SummaryManager.summary_filename_no_ext
+            or SummaryManager.summary_filename_no_ext
         self.summary_filename_ext = \
             custom_config.get('summary_filename_ext')\
-            | SummaryManager.summary_filename_ext
+            or SummaryManager.summary_filename_ext
         self.labels = custom_config.get('labels')\
-            | SummaryManager.labels
+            or SummaryManager.labels
         self.export_summary_basename =\
-            custom_config.export_summary_basename('labels')\
-            | SummaryManager.export_summary_basename
+            custom_config.get('export_summary_basename')\
+            or SummaryManager.export_summary_basename
+        self.summary_filename = ((
+            f"{self.summary_filename_no_ext}"
+            f"{self.summary_filename_ext}"
+        ))
 
 
         self.unsaved = False
@@ -391,7 +394,3 @@ with open('summarymanager_config.txt', 'r') as f:
             SummaryManager.labels = val.split(',')
         elif atrib == 'export_summary_basename':
             SummaryManager.export_summary_basename = val
-    SummaryManager.summary_filename = ((
-        f"{SummaryManager.summary_filename_no_ext}"
-        f"{SummaryManager.summary_filename_ext}"
-    ))

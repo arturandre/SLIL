@@ -200,7 +200,8 @@ while True:
             if text is not None:
                 summary_manager.update_summary(text)
             continue
-        elif event_str in ('\r', 'Return:36', 'Save'):
+        elif event_str in ('\r', 'Return:36', 'Save')\
+            or 'Enter' in event_str:
             print('Enter')
             sel_labels = \
                 [cb[0].get() for cb in labels_col[:len(summary_manager.labels)]]

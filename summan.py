@@ -16,8 +16,13 @@ class SummaryManager:
         self.summary_filename_ext = \
             custom_config.get('summary_filename_ext')\
             or SummaryManager.summary_filename_ext
+
         self.labels = custom_config.get('labels')\
             or SummaryManager.labels
+        self.label_dependencies = {}
+        self._check_labels_dependencies()
+        
+
         self.export_summary_basename =\
             custom_config.get('export_summary_basename')\
             or SummaryManager.export_summary_basename
@@ -30,6 +35,17 @@ class SummaryManager:
         self.unsaved = False
         self.img_filenames = []
         pass
+
+    def _check_labels_dependencies(self):
+        self.label_dependencies = {}
+        for i, label in enumerate(self.labels):
+            if '>' in label:
+                label, dependencies = label.split('>')
+                # Removing the '(' and ')' characters"
+                dependencies = dependencies[1:-1]
+                self.labels[i] = label
+                self.label_dependencies[label] = dependencies.split('+')
+
 
     def _get_headers(self):
         """

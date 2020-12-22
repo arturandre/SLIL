@@ -6,6 +6,7 @@ from PIL import Image, ImageTk
 import imageio
 import PySimpleGUI as sg
 import os
+import re
 
 menu_def = [['&File', ['&Choose folder', 'S&ave labels', '&Save as labels', '&Load labels', '&Quit']],
             ['&Export', ['&Export batch', '&Merge (import batch)']]
@@ -25,11 +26,11 @@ labels_col = []
 
 summary_manager = SummaryManager()
 
-for label in SummaryManager.labels:
+for label in summary_manager.labels:
     labels_col.append([sg.Checkbox(label)])
 labels_col.append([sg.Button('Save')])
 labels_col.append([sg.Button('<- Previous'), sg.Button('Next ->')])
-labels_col.append([sg.Checkbox('Auto-save', default=True, key="cbautosave")])
+labels_col.append([sg.Checkbox('Auto-save', default=False, key="cbautosave")])
 labels_col.append([sg.Checkbox('Only unlabeled', default=False, key="cbunlabeled")])
 labels_col.append([sg.Checkbox('Ignore exported', default=True, key="cbexported")])
 labels_col.append([sg.Text('Image index: 000000/000000', key="txt_img_index")])
@@ -40,7 +41,9 @@ layout = [[sg.Menu(menu_def, tearoff=True)],
           ]
 
 # Create the Window
-window = sg.Window('Street Level Imagery Labeler - SLIL', layout, return_keyboard_events=True, use_default_focus=False).Finalize()
+window = sg.Window('Street Level Imagery Labeler - SLIL',
+    layout, return_keyboard_events=True,
+    use_default_focus=False).Finalize()
 
 current_sample_index = -1
 
@@ -85,7 +88,7 @@ def decrease_sample_index():
                 break
             next_sample = summary_manager.current_labelgui_summary.iloc[current_sample_index]
             if ignore_unlabeled:
-                if not next_sample[SummaryManager.labels[0]] in (-1, '-1'):
+                if not next_sample[summary_manager.labels[0]] in (-1, '-1'):
                     continue
             if ignore_exported:
                 if next_sample['status'] == 'exported':
@@ -113,7 +116,7 @@ def increase_sample_index():
                 break
             next_sample = summary_manager.current_labelgui_summary.iloc[current_sample_index]
             if ignore_unlabeled:
-                if not next_sample[SummaryManager.labels[0]] in (-1, '-1'):
+                if not next_sample[summary_manager.labels[0]] in (-1, '-1'):
                     continue
             if ignore_exported:
                 if next_sample['status'] == 'exported':
@@ -153,11 +156,14 @@ def load_sample(index):
 # Event Loop to process "events" and get the "values" of the inputs
 while True:
     event, values = window.read()
-    if event == None:  # if user closes window
+    print('event ', event)
+    print('values ', values)
+    
+    if (event == None) or (event in ('Quit')):  # if user closes window
         if summary_manager.unsaved:
             close_save = sg.popup_yes_no('There are changes not saved, wish to save them before exiting?')
             if close_save == "Yes":
-                sel_labels = [cb[0].get() for cb in labels_col[:len(SummaryManager.labels)]]
+                sel_labels = [cb[0].get() for cb in labels_col[:len(summary_manager.labels)]]
                 summary_manager.save_sample_labels(current_sample_index, sel_labels)
                 summary_manager.update_summary()
         break
@@ -196,7 +202,7 @@ while True:
         elif event in ('\r', 'Return:36', 'Save'):
             print('Enter')
             sel_labels = \
-                [cb[0].get() for cb in labels_col[:len(SummaryManager.labels)]]
+                [cb[0].get() for cb in labels_col[:len(summary_manager.labels)]]
             summary_manager.\
                 save_sample_labels(current_sample_index, sel_labels)
             continue
@@ -205,22 +211,42 @@ while True:
                 [cb[0].get() for cb in labels_col[:len(summary_manager.labels)]]
             summary_manager.\
                 save_sample_labels(current_sample_index, sel_labels)
-        if event.isdigit():  # hotkey for labels
+        if event.isdigit()\
+            or re.match(r"^KP_\d:", event)\
+            or re.match(r"^\d:", event):  # hotkey for labels
             print("digit: ", event)
+            if re.match(r"^KP_\d:", event):
+                event = re.match(r"^KP_(\d):", event).groups()[0]
+            if re.match(r"^(\d):", event):
+                event = re.match(r"^\d:", event).groups()[0]
             event = int(event)
-            if event < len(SummaryManager.labels):
+            if event < len(summary_manager.labels):
                 sel_checkbox = labels_col[event][0]
                 checked = bool(sel_checkbox.get())
                 sel_checkbox.update(not checked)
+                # Checking dependencies
+                sel_label = sel_checkbox.Text
+                if not checked: # Just checked the CheckBox
+                    if sel_label in summary_manager.label_dependencies.keys():
+                        deps = summary_manager.label_dependencies[sel_label]
+                        for i in range(len(summary_manager.labels)):
+                            aux_checkbox = labels_col[i][0]
+                            if aux_checkbox.Text in deps:
+                                aux_checkbox.update(True)
+
                 continue
-        elif event in ('Left:37', '<- Previous'):
+        elif (event in ('Left:37', '<- Previous'))\
+            or ('Left' in event):
             decrease_sample_index()
-        elif event in ('Right:39', 'Next ->'):
+        elif (event in ('Right:39', 'Next ->'))\
+            or ('Right' in event):
             increase_sample_index()
 
-    else:
-        print('event ', event)
-    print('event ', event)
+    #else:
+    #    print('event ', event)
+    #    print('values ', values)
+    #print('event ', event)
+    #print('values ', values)
     # print('You entered ', values[0])
 
 

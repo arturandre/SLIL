@@ -42,8 +42,20 @@ layout = [[sg.Menu(menu_def, tearoff=True, key='menu')],
 
 # Create the Window
 window = sg.Window('Street Level Imagery Labeler - SLIL',
-    layout, return_keyboard_events=True,
+    layout,
+    return_keyboard_events=False,
     use_default_focus=False).Finalize()
+
+window.bind("<Key>", '')
+
+# Refs:
+# - event handlers: https://anzeljg.github.io/rin2/book2/2405/docs/tkinter/event-handlers.html
+# -- event types: https://anzeljg.github.io/rin2/book2/2405/docs/tkinter/event-types.html
+# -- key names: https://anzeljg.github.io/rin2/book2/2405/docs/tkinter/key-names.html
+def handleKeyboardEvents(event):
+    if event.type == 2:  # KeyPress
+        print(event.keysym)
+        
 
 current_sample_index = -1
 
@@ -153,14 +165,45 @@ def load_sample(index):
             ))
     pass
 
+def save_in_memory():
+    sel_labels = \
+        [cb[0].get() for cb in labels_col[:len(summary_manager.labels)]]
+    summary_manager.\
+        save_sample_labels(current_sample_index, sel_labels)
+
+def check_label_checkbox(label_index, mouse_click=False):
+    sel_checkbox = labels_col[label_index][0]
+    checked = bool(sel_checkbox.get())
+    if mouse_click: checked = not checked
+    sel_checkbox.update(not checked)
+    # Checking dependencies
+    sel_label = sel_checkbox.Text
+    if not checked: # Just checked the CheckBox right now
+        if sel_label in summary_manager.label_dependencies.keys():
+            deps = summary_manager.label_dependencies[sel_label]
+            for i in range(len(summary_manager.labels)):
+                aux_checkbox = labels_col[i][0]
+                if aux_checkbox.Text in deps:
+                    aux_checkbox.update(True)
+
 # Event Loop to process "events" and get the "values" of the inputs
 while True:
+    # Needed to detect when the "X" close button is pressed
     event, values = window.read()
-    event_str = str(event)
-    print('event ', event, event_str)
-    print('values ', values)
     
-    if (event == None) or (event_str in ('Quit')):  # if user closes window
+    event_str = str(event)
+    print((
+        f'event: {event}, type(event): {type(event)}, '
+        f'event_str: {event_str}, type(event_str): {type(event_str)}')
+        )
+    print('values ', values)
+
+    if (event is not None) and (len(event) == 0):
+        print(f'user_bind_event: {window.user_bind_event}')
+        print(f'char: {window.user_bind_event.char}, {type(window.user_bind_event.char)}')
+        print(f'keysym: {window.user_bind_event.keysym}, {type(window.user_bind_event.keysym)}')
+    
+    if event is None:  # if user closes window
         if summary_manager.unsaved:
             close_save = sg.popup_yes_no('There are changes not saved, wish to save them before exiting?')
             if close_save == "Yes":
@@ -192,6 +235,8 @@ while True:
                 current_sample_index = 0
                 load_sample(current_sample_index)
     elif summary_manager.is_summary_loaded():
+        if window["cbautosave"].get():
+            save_in_memory()
         if event == 'Save labels':
             summary_manager.update_summary()
             continue
@@ -200,64 +245,31 @@ while True:
             if text is not None:
                 summary_manager.update_summary(text)
             continue
-        elif event_str in ('\r', 'Return:36', 'Save')\
-            or 'Enter' in event_str:
-            print('Enter')
-            sel_labels = \
-                [cb[0].get() for cb in labels_col[:len(summary_manager.labels)]]
-            summary_manager.\
-                save_sample_labels(current_sample_index, sel_labels)
+        elif event == 'Save':
+            save_in_memory()
             continue
-        if window["cbautosave"].get():
-            sel_labels = \
-                [cb[0].get() for cb in labels_col[:len(summary_manager.labels)]]
-            summary_manager.\
-                save_sample_labels(current_sample_index, sel_labels)
-        if (event_str.isdigit()\
-            or re.match(r"^KP_\d:", event_str)\
-            or re.match(r"^label_\d$", event_str)\
-            or re.match(r"^\d:", event_str)):  # hotkey for labels
-            print("digit: ", event_str)
-            mouse_click = False
-            if re.match(r"^KP_\d:", event_str):
-                event_str = re.match(r"^KP_(\d):", event_str).groups()[0]
-            if re.match(r"^label_(\d)", event_str):
-                event_str = re.match(r"^label_(\d)", event_str).groups()[0]
-                mouse_click = True
-            if re.match(r"^(\d):", event_str):
-                event_str = re.match(r"^\d:", event_str).groups()[0]
-            event = int(event_str)
-            print(event)
-            if event < len(summary_manager.labels):
-                sel_checkbox = labels_col[event][0]
-                checked = bool(sel_checkbox.get())
-                if mouse_click: checked = not checked
-                sel_checkbox.update(not checked)
-                # Checking dependencies
-                sel_label = sel_checkbox.Text
-                if not checked: # Just checked the CheckBox
-                    if sel_label in summary_manager.label_dependencies.keys():
-                        deps = summary_manager.label_dependencies[sel_label]
-                        for i in range(len(summary_manager.labels)):
-                            aux_checkbox = labels_col[i][0]
-                            if aux_checkbox.Text in deps:
-                                aux_checkbox.update(True)
-
-                continue
-        elif (event in ('Left:37', '<- Previous'))\
-            or ('Left' in event):
+        elif event == '<- Previous':
             decrease_sample_index()
-        elif (event in ('Right:39', 'Next ->'))\
-            or ('Right' in event):
+        elif event == 'Next ->':
             increase_sample_index()
-
-    #else:
-    #    print('event ', event)
-    #    print('values ', values)
-    #print('event ', event)
-    #print('values ', values)
-    # print('You entered ', values[0])
-
+        elif re.match(r'^label_\d+$', event):
+            checkbox_label = re.match(r'^label_(\d+)$', event).groups()[0]
+            checkbox_label = int(checkbox_label)
+            check_label_checkbox(checkbox_label, mouse_click=True)
+        elif len(event) == 0: # keyboard events
+            if len(window.user_bind_event.char) == 1:  # numbers/letters/enter keys
+                if window.user_bind_event.char == '\r':  # Enter keys
+                    save_in_memory()
+                    continue
+                elif window.user_bind_event.char.isdigit(): # Number keys
+                    pressedNum = int(window.user_bind_event.char)
+                    if pressedNum < len(summary_manager.labels):
+                        check_label_checkbox(pressedNum)
+            elif window.user_bind_event.keysym == 'Left': # Enter keys:
+                decrease_sample_index()
+            elif window.user_bind_event.keysym == 'Right': # Enter keys:
+                increase_sample_index()
+        
 
 
 window.close()

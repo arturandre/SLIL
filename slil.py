@@ -19,15 +19,15 @@ sg.theme('DarkAmber')  # Add a touch of color
 window = None
 sgImage = None
 
-sgImage = sg.Image(size=(640, 640))
+sgImage = sg.Image(size=(640, 640), key='displayImage')
 
 img_col = [[sgImage]]
 labels_col = []
 
 summary_manager = SummaryManager()
 
-for label in summary_manager.labels:
-    labels_col.append([sg.Checkbox(label)])
+for i, label in enumerate(summary_manager.labels):
+    labels_col.append([sg.Checkbox(label, enable_events=True, key=f'label_{i}')])
 labels_col.append([sg.Button('Save')])
 labels_col.append([sg.Button('<- Previous'), sg.Button('Next ->')])
 labels_col.append([sg.Checkbox('Auto-save', default=False, key="cbautosave")])
@@ -36,7 +36,7 @@ labels_col.append([sg.Checkbox('Ignore exported', default=True, key="cbexported"
 labels_col.append([sg.Text('Image index: 000000/000000', key="txt_img_index")])
 
 # All the stuff inside your window.
-layout = [[sg.Menu(menu_def, tearoff=True)],
+layout = [[sg.Menu(menu_def, tearoff=True, key='menu')],
           [sg.Column(img_col), sg.Column(labels_col)],
           ]
 
@@ -156,10 +156,11 @@ def load_sample(index):
 # Event Loop to process "events" and get the "values" of the inputs
 while True:
     event, values = window.read()
-    print('event ', event)
+    event_str = str(event)
+    print('event ', event, event_str)
     print('values ', values)
     
-    if (event == None) or (event in ('Quit')):  # if user closes window
+    if (event == None) or (event_str in ('Quit')):  # if user closes window
         if summary_manager.unsaved:
             close_save = sg.popup_yes_no('There are changes not saved, wish to save them before exiting?')
             if close_save == "Yes":
@@ -199,7 +200,7 @@ while True:
             if text is not None:
                 summary_manager.update_summary(text)
             continue
-        elif event in ('\r', 'Return:36', 'Save'):
+        elif event_str in ('\r', 'Return:36', 'Save'):
             print('Enter')
             sel_labels = \
                 [cb[0].get() for cb in labels_col[:len(summary_manager.labels)]]
@@ -211,18 +212,25 @@ while True:
                 [cb[0].get() for cb in labels_col[:len(summary_manager.labels)]]
             summary_manager.\
                 save_sample_labels(current_sample_index, sel_labels)
-        if event.isdigit()\
-            or re.match(r"^KP_\d:", event)\
-            or re.match(r"^\d:", event):  # hotkey for labels
-            print("digit: ", event)
-            if re.match(r"^KP_\d:", event):
-                event = re.match(r"^KP_(\d):", event).groups()[0]
-            if re.match(r"^(\d):", event):
-                event = re.match(r"^\d:", event).groups()[0]
-            event = int(event)
+        if (event_str.isdigit()\
+            or re.match(r"^KP_\d:", event_str)\
+            or re.match(r"^label_\d$", event_str)\
+            or re.match(r"^\d:", event_str)):  # hotkey for labels
+            print("digit: ", event_str)
+            mouse_click = False
+            if re.match(r"^KP_\d:", event_str):
+                event_str = re.match(r"^KP_(\d):", event_str).groups()[0]
+            if re.match(r"^label_(\d)", event_str):
+                event_str = re.match(r"^label_(\d)", event_str).groups()[0]
+                mouse_click = True
+            if re.match(r"^(\d):", event_str):
+                event_str = re.match(r"^\d:", event_str).groups()[0]
+            event = int(event_str)
+            print(event)
             if event < len(summary_manager.labels):
                 sel_checkbox = labels_col[event][0]
                 checked = bool(sel_checkbox.get())
+                if mouse_click: checked = not checked
                 sel_checkbox.update(not checked)
                 # Checking dependencies
                 sel_label = sel_checkbox.Text

@@ -230,6 +230,8 @@ while True:
         text = sg.popup_get_folder('Please select a pictures folder')
         if text is not None:
             sg.popup('Results', 'The value returned from PopupGetFolder', text)
+            if not os.path.exists(text):
+                sg.popup('The folder', text, 'couldn\'t be found or is inaccessible!')
             summary_manager.load_images_folder(text)
             if summary_manager.is_summary_loaded():
                 current_sample_index = 0

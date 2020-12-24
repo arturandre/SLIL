@@ -7,8 +7,8 @@
 # already exists then a _N will be appended.
 # N is the lowest integer (starting with 1)
 # that doesn't exists in the folder, that is
-# if labelgui.smr and labelgui_1.smr already exists
-# in the pictures folder then labelgui_2.smr will be
+# if summan.smr and summan_1.smr already exists
+# in the pictures folder then summan_2.smr will be
 # created.
 summary_filename_no_ext = 'summan'
 

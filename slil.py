@@ -21,13 +21,20 @@ sgImage = None
 
 sgImage = sg.Image(size=(640, 640), key='displayImage')
 
-img_col = [[sgImage]]
+img_col = []
+
+img_col.append([sgImage])
+img_col.append([sg.Text('Image name: -' + '-'*140, key="txt_img_name")])
+
 labels_col = []
 
 summary_manager = SummaryManager()
 
 for i, label in enumerate(summary_manager.labels):
-    labels_col.append([sg.Checkbox(label, enable_events=True, key=f'label_{i}')])
+    labels_col.append([
+        sg.Checkbox(label, enable_events=True, key=f'label_{i}'),
+        sg.Text('*', key=f'unlabeled_{i}')
+        ])
 labels_col.append([sg.Button('Save')])
 labels_col.append([sg.Button('<- Previous'), sg.Button('Next ->')])
 labels_col.append([sg.Checkbox('Auto-save', default=False, key="cbautosave")])
@@ -145,14 +152,20 @@ def set_sample_labels(index):
     if summary_manager.is_summary_loaded():
         current_labels = summary_manager.current_labelgui_summary.iloc[index][-len(summary_manager.labels):]
         for current_label in enumerate(current_labels):
+            # Checkbox
             labels_col[current_label[0]][0].update(current_label[1] in [1, '1'])
+            # Text (*)
+            labels_col[current_label[0]][1]\
+                .update('*' if current_label[1] in [-1, '-1'] else '')
 
 
 def load_sample(index):
     if summary_manager.is_summary_loaded():
+        imgName = summary_manager.current_labelgui_summary.index[index]
         imgFilename = os.path.join(
             os.path.dirname(summary_manager.current_labelgui_summary_filepath),
-            summary_manager.current_labelgui_summary.index[index])
+            imgName)
+        
         image = Image.open(imgFilename)
         photo = ImageTk.PhotoImage(image)
         sgImage.update(data=photo)
@@ -163,6 +176,13 @@ def load_sample(index):
                 f"{index}/"
                 f"{len(summary_manager.current_labelgui_summary) - 1}"
             ))
+        window['txt_img_name'].\
+            update((
+                "Image name: "
+                f"{imgName}"
+            ))
+        print(imgName)
+        
     pass
 
 def save_in_memory():
@@ -240,15 +260,18 @@ while True:
         if window["cbautosave"].get():
             save_in_memory()
         if event == 'Save labels':
+            save_in_memory()
             summary_manager.update_summary()
             continue
         elif event == 'Save as labels':
             text = sg.popup_get_folder('Please select a folder')
             if text is not None:
+                save_in_memory()
                 summary_manager.update_summary(text)
             continue
         elif event == 'Save':
             save_in_memory()
+            summary_manager.update_summary()
             continue
         elif event == '<- Previous':
             decrease_sample_index()

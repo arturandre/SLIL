@@ -346,6 +346,18 @@ class SummaryManager:
                 summary_file.write(self._get_headers())
                 summary_file.write('\n')
         df = self._load_csv(self.current_labelgui_summary_filepath)
+
+        # Check for new labels:
+        current_headers_list = self._get_headers().split(',')
+        file_headers_list = [df.index.name] + list(df.columns.values)
+        updated_labels = False
+        for col in current_headers_list:
+            if col not in file_headers_list:
+                df[col] = -1
+                updated_labels = True
+        if updated_labels:
+            df.to_csv(self.current_labelgui_summary_filepath)
+                
         with open(self.current_labelgui_summary_filepath, 'a+')\
             as summary_file:
             # update file if needed

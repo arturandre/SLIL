@@ -247,15 +247,38 @@ while True:
         summary_manager.merge_summary(text)
         pass
     elif event == 'Choose folder':  # File -> Choose folder button
-        text = sg.popup_get_folder('Please select a pictures folder')
-        if text is not None:
-            sg.popup('Results', 'The value returned from PopupGetFolder', text)
-            if not os.path.exists(text):
-                sg.popup('The folder', text, 'couldn\'t be found or is inaccessible!')
-            summary_manager.load_images_folder(text)
-            if summary_manager.is_summary_loaded():
-                current_sample_index = 0
-                load_sample(current_sample_index)
+        picture_folder = sg.popup_get_folder('Please select a pictures folder')
+        if picture_folder is not None:
+            sg.popup('Results', 'The value returned from PopupGetFolder', picture_folder)
+            if not os.path.exists(picture_folder):
+                sg.popup('The folder', picture_folder, 'couldn\'t be found or is inaccessible!')
+            else:
+                present_labels, new_labels = \
+                    summary_manager.compare_summary_headers(picture_folder)
+                if len(new_labels) > 0:
+                    update_summary = sg.popup_yes_no((
+                        f'New labels not present in summary: '
+                        f'{new_labels}\n'
+                        f'Labels present in summary: '
+                        f'{present_labels}\n'
+                        f'Want to insert them in the summary file?'
+                        ))
+                    if update_summary == "Yes":
+                        summary_manager.update_summary_headers(picture_folder)
+                    else:
+                        sg.popup('Incompatible headers!',
+                        ((
+                            f'Please change the labels in summarymanaget_config.txt file '
+                            f'to {present_labels} and restart the application.'
+                        )))
+                        break
+                
+                summary_manager.load_images_folder(picture_folder)
+
+                if summary_manager.is_summary_loaded():
+                    current_sample_index = 0
+                    load_sample(current_sample_index)
+                    
     elif summary_manager.is_summary_loaded():
         if window["cbautosave"].get():
             save_in_memory()

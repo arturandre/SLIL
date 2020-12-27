@@ -46,6 +46,11 @@ class SummaryManager:
                 self.labels[i] = label
                 self.label_dependencies[label] = dependencies.split('+')
 
+    def get_default_headers(self):
+        all_headers = self._get_headers().split(',')
+        num_setting_labels = len(self.labels)
+        return all_headers[:-num_setting_labels]
+
 
     def _get_headers(self):
         """
@@ -321,6 +326,51 @@ class SummaryManager:
                 dt2.loc[sample] = dt1.loc[sample]
         return dt2
 
+    def get_settings_header(self):
+        return self._get_headers().split(',')
+
+    def get_summary_header(self, folder_path):
+        summary_filepath = os.path.join(folder_path, self.summary_filename)
+        df = self._load_csv(summary_filepath)
+        file_headers_list = [df.index.name] + list(df.columns.values)
+        return file_headers_list
+
+    def compare_summary_headers(self, folder_path):
+        """
+        Checks if the summary file at 'folder_path' is the
+        same as set in the summarymanager_config.txt file.
+
+        It should be used to append new labels in a .smr file.
+        """
+        current_headers_list = self.get_settings_header()
+        file_headers_list = self.get_summary_header(folder_path)
+        
+        other_headers = []
+        present_headers = []
+        for col in current_headers_list:
+            if col not in file_headers_list:
+                other_headers.append(col)
+        for col in file_headers_list:
+            if col in self.get_default_headers():
+                continue
+            present_headers.append(col)
+        return present_headers, other_headers
+
+    def update_summary_headers(self, folder_path):
+        _, new_labels = self.compare_summary_headers(folder_path)
+        summary_filepath = os.path.join(
+            folder_path,
+            self.summary_filename
+            )
+        df = self._load_csv(summary_filepath)
+        if len(new_labels) > 0:
+            for label in new_labels:
+                df[label] = -1
+            df.to_csv(summary_filepath)
+        return df
+        
+
+
     def load_images_folder(self, folder_path):
         """
         Loads a summary or creates one based on the
@@ -348,15 +398,16 @@ class SummaryManager:
         df = self._load_csv(self.current_labelgui_summary_filepath)
 
         # Check for new labels:
-        current_headers_list = self._get_headers().split(',')
-        file_headers_list = [df.index.name] + list(df.columns.values)
-        updated_labels = False
-        for col in current_headers_list:
-            if col not in file_headers_list:
-                df[col] = -1
-                updated_labels = True
-        if updated_labels:
-            df.to_csv(self.current_labelgui_summary_filepath)
+        #current_headers_list = self.get_settings_header()
+        #file_headers_list = [df.index.name] + list(df.columns.values)
+        #file_headers_list = self.get_summary_header(folder_path)
+        #updated_labels = False
+        #for col in current_headers_list:
+        #    if col not in file_headers_list:
+        #        df[col] = -1
+        #        updated_labels = True
+        #if updated_labels:
+        #    df.to_csv(self.current_labelgui_summary_filepath)
                 
         with open(self.current_labelgui_summary_filepath, 'a+')\
             as summary_file:

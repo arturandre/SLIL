@@ -5,12 +5,23 @@
 from PIL import Image, ImageTk
 import imageio
 import PySimpleGUI as sg
+import webbrowser
 import os
 import re
 
-menu_def = [['&File', ['&Choose folder', 'S&ave labels', '&Save as labels', '&Load labels', '&Quit']],
-            ['&Export', ['&Export batch', '&Merge (import batch)']]
-            ]
+menu_def = [['&File',
+    ['&Choose folder',
+    'S&ave labels',
+    '&Save as labels',
+    '&Load labels',
+    '&Quit']
+    ],
+    ['&Edit',
+    ['&Go to',
+    '&Export batch',
+    '&Merge (import batch)']
+    ]
+]
 
 from summan import SummaryManager
 
@@ -42,6 +53,9 @@ labels_col.append([sg.Checkbox('Only unlabeled', default=False, key="cbunlabeled
 labels_col.append([sg.Checkbox('Ignore exported', default=True, key="cbexported")])
 labels_col.append([sg.Text('Image index: 000000/000000', key="txt_img_index")])
 
+labels_col.append([sg.Text('Check on GSV:')])
+labels_col.append([sg.Button('Pano'), sg.Button('Coordinates')])
+
 # All the stuff inside your window.
 layout = [[sg.Menu(menu_def, tearoff=True, key='menu')],
           [sg.Column(img_col), sg.Column(labels_col)],
@@ -52,6 +66,22 @@ window = sg.Window('Street Level Imagery Labeler - SLIL',
     layout,
     return_keyboard_events=False,
     use_default_focus=False).Finalize()
+def on_close():
+    if sg.popup_ok_cancel("Do you really want to exit?", title="Confirm exit") == "OK":
+        if summary_manager.unsaved:
+            close_save = sg.\
+                popup_yes_no('There are changes not saved, wish to save them before exiting?')
+            if close_save == "Yes":
+                sel_labels = [cb[0].get() for cb in labels_col[:len(summary_manager.labels)]]
+                summary_manager.save_sample_labels(current_sample_index, sel_labels)
+                summary_manager.update_summary()
+            if close_save is not None:
+                window.Close()
+                exit()
+        else:
+            window.Close()
+            exit()
+window.TKroot.protocol("WM_DELETE_WINDOW", on_close)
 
 window.bind("<Key>", '')
 
@@ -65,6 +95,9 @@ def handleKeyboardEvents(event):
         
 
 current_sample_index = -1
+current_pano = None
+current_heading = None
+current_pitch = None
 
 def get_next_unlabeled(backwards=False, ignore_unlabeled=False, ignore_exported=False):
     global current_sample_index
@@ -120,7 +153,6 @@ def decrease_sample_index():
         #else:
         #    load_sample(current_sample_index)
 
-
 def increase_sample_index():
     global current_sample_index
     if summary_manager.is_summary_loaded():
@@ -160,11 +192,24 @@ def set_sample_labels(index):
 
 
 def load_sample(index):
+    global current_sample_index
+    global current_pano
+    global current_heading
+    global current_pitch
     if summary_manager.is_summary_loaded():
-        imgName = summary_manager.current_labelgui_summary.index[index]
+        img_name = summary_manager.current_labelgui_summary.index[index]
         imgFilename = os.path.join(
             os.path.dirname(summary_manager.current_labelgui_summary_filepath),
-            imgName)
+            img_name)
+        #_panoid_-zFcDmsqVM0Sfw0yQSzlcg_heading_135_pitch_-4
+        current_sample_index = index
+        heading_idx = img_name.index("_heading_")
+        pitch_idx = img_name.index("_pitch_")
+        current_pano = img_name[len("_panoid_"):heading_idx]
+        current_heading = img_name\
+            [(heading_idx + len("_heading_")):pitch_idx]
+        current_pitch = img_name\
+            [(pitch_idx+len("_pitch_")):img_name.index(".png")]
         
         image = Image.open(imgFilename)
         photo = ImageTk.PhotoImage(image)
@@ -179,9 +224,9 @@ def load_sample(index):
         window['txt_img_name'].\
             update((
                 "Image name: "
-                f"{imgName}"
+                f"{img_name}"
             ))
-        print(imgName)
+        print(img_name)
         
     pass
 
@@ -224,12 +269,6 @@ while True:
         print(f'keysym: {window.user_bind_event.keysym}, {type(window.user_bind_event.keysym)}')
     
     if event is None:  # if user closes window
-        if summary_manager.unsaved:
-            close_save = sg.popup_yes_no('There are changes not saved, wish to save them before exiting?')
-            if close_save == "Yes":
-                sel_labels = [cb[0].get() for cb in labels_col[:len(summary_manager.labels)]]
-                summary_manager.save_sample_labels(current_sample_index, sel_labels)
-                summary_manager.update_summary()
         break
     elif event == 'Export batch':  # Export -> Export batch button
         text = sg.popup_get_text("How many images should be exported?",
@@ -253,25 +292,30 @@ while True:
             if not os.path.exists(picture_folder):
                 sg.popup('The folder', picture_folder, 'couldn\'t be found or is inaccessible!')
             else:
-                present_labels, new_labels = \
-                    summary_manager.compare_summary_headers(picture_folder)
-                if len(new_labels) > 0:
-                    update_summary = sg.popup_yes_no((
-                        f'New labels not present in summary: '
-                        f'{new_labels}\n'
-                        f'Labels present in summary: '
-                        f'{present_labels}\n'
-                        f'Want to insert them in the summary file?'
-                        ))
-                    if update_summary == "Yes":
-                        summary_manager.update_summary_headers(picture_folder)
-                    else:
-                        sg.popup('Incompatible headers!',
-                        ((
-                            f'Please change the labels in summarymanaget_config.txt file '
-                            f'to {present_labels} and restart the application.'
-                        )))
-                        break
+                if os.path.isfile(
+                    os.path.join(
+                        picture_folder,
+                        summary_manager.summary_filename)
+                    ):
+                    present_labels, new_labels = \
+                        summary_manager.compare_summary_headers(picture_folder)
+                    if len(new_labels) > 0:
+                        update_summary = sg.popup_yes_no((
+                            f'New labels not present in summary: '
+                            f'{new_labels}\n'
+                            f'Labels present in summary: '
+                            f'{present_labels}\n'
+                            f'Want to insert them in the summary file?'
+                            ))
+                        if update_summary == "Yes":
+                            summary_manager.update_summary_headers(picture_folder)
+                        else:
+                            sg.popup('Incompatible headers!',
+                            ((
+                                f'Please change the labels in summarymanaget_config.txt file '
+                                f'to {present_labels} and restart the application.'
+                            )))
+                            break
                 
                 summary_manager.load_images_folder(picture_folder)
 
@@ -286,6 +330,13 @@ while True:
             save_in_memory()
             summary_manager.update_summary()
             continue
+        elif event == 'Go to':  # Go to (top menu button)
+            text = sg.popup_get_text(f"Go to which image index from {0} up to {current_sample_index}",
+                                    title='Go to image',
+                                    default_text='0')
+            if text is not None:
+                sample_index = int(text)
+                load_sample(sample_index)
         elif event == 'Save as labels':
             text = sg.popup_get_folder('Please select a folder')
             if text is not None:
@@ -300,6 +351,36 @@ while True:
             decrease_sample_index()
         elif event == 'Next ->':
             increase_sample_index()
+        elif event == 'Pano':  # Go to (top menu button)
+            googleaddress = ((
+                f"https://www.google.com/maps/@"
+                f"-23.7411249,-46.705598"
+                f",3a,75y,"
+                f"{current_heading}h,"
+                f"{int(current_pitch)+90}t"
+                f"/data=!3m7!1e1!3m5!1s"
+                f"{current_pano}"
+                f"!2e0!6s%2F%2Fgeo0.ggpht.com%2Fcbk%3Fpanoid%3D"
+                f"{current_pano}"
+                f"%26output%3Dthumbnail%26cb_client%3Dmaps_sv.tactile.gps%26"
+                f"thumb%3D2%26w%3D203%26h%3D100%26"
+                f"yaw%3D169.97714%26pitch%3D0%26"
+                f"thumbfov%3D100!7i16384!8i8192"
+            ))
+            webbrowser.open_new_tab(googleaddress)
+        elif event == 'Coordinates':  # Go to (top menu button)
+            #/data=!3m7!1e1!3m5!1s!2e0!5s20140101T000000!7i13312!8i6656
+            lat, lon = summary_manager.\
+                current_labelgui_summary.iloc[current_sample_index][['lat', 'lon']]
+            googleaddress = ((
+                f"https://www.google.com/maps/@"
+                f"{lat},{lon}"
+                f",3a,75y,"
+                f"{current_heading}h,"
+                f"{int(current_pitch)+90}t"
+                f"/data=!3m7!1e1!3m5!1s!2e0!5s20140101T000000!7i13312!8i6656"
+            ))
+            webbrowser.open_new_tab(googleaddress)
         elif re.match(r'^label_\d+$', event):
             checkbox_label = re.match(r'^label_(\d+)$', event).groups()[0]
             checkbox_label = int(checkbox_label)
@@ -320,4 +401,4 @@ while True:
         
 
 
-window.close()
+

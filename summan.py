@@ -369,7 +369,7 @@ class SummaryManager:
             df.to_csv(summary_filepath)
         return df
         
-
+    
 
     def load_images_folder(self, folder_path):
         """

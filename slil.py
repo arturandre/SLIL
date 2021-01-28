@@ -370,7 +370,7 @@ while True:
                         else:
                             sg.popup('Incompatible headers!',
                             ((
-                                f'Please change the labels in summarymanaget_config.txt file '
+                                f'Please change the labels in summarymanager_config.txt file '
                                 f'to {present_labels} and restart the application.'
                             )))
                             break

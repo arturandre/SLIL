@@ -451,7 +451,10 @@ class SummaryManager:
                 self._load_csv(self.current_labelgui_summary_filepath)
 
         # END: for img_filename in img_filenames:
-with open('summarymanager_config.txt', 'r') as f:
+
+dirname = os.path.dirname(__file__)
+summary_filename = os.path.join(dirname, 'summarymanager_config.txt')
+with open(summary_filename, 'r') as f:
     for line in f.readlines():
         if (line.startswith('#')) or (line.strip() == ""):
             continue

@@ -5,6 +5,10 @@ import pandas as pd
 
 
 class SummaryManager:
+    unlabeled_code = '-10'
+    positive_label = '1'
+    negative_label = '-1'
+    uncertain_label = '0'
     def __init__(self, custom_config={}):
         self.current_labelgui_summary_dirpath = None
         self.current_labelgui_summary_filepath = None
@@ -87,7 +91,7 @@ class SummaryManager:
             return self.current_labelgui_summary[
                 self.current_labelgui_summary[
                     self.labels[0]
-                    ] != '-1']
+                    ] != SummaryManager.unlabeled_code]
 
 
     def count_labeled_samples(self):
@@ -168,17 +172,20 @@ class SummaryManager:
         if self.is_summary_loaded():
             if os.path.isfile(import_summary_filepath):
                 merge_df = self._load_csv(import_summary_filepath)
-                indices = merge_df[merge_df[self.labels[0]] != -1].index
+                indices = merge_df[merge_df[self.labels[0]] != \
+                    int(SummaryManager.unlabeled_code)].index
                 for index in indices:
                     if index in self.current_labelgui_summary.index:
                         # Notice that here we update an unlabeled
                         # entry, even if this entry were not exported!
                         if (int(
                             self.current_labelgui_summary.\
-                            loc[index][self.labels[0]]) == -1) \
+                            loc[index][self.labels[0]]) == \
+                                int(SummaryManager.unlabeled_code)) \
                             and\
                             (int(merge_df.\
-                                loc[index][self.labels[0]]) != -1):
+                                loc[index][self.labels[0]]) != \
+                                    int(SummaryManager.unlabeled_code)):
                             self.current_labelgui_summary.\
                                 loc[index] = merge_df.loc[index]
                 self.override_summary()
@@ -199,7 +206,7 @@ class SummaryManager:
             for img_index in self.current_labelgui_summary[
                 self.current_labelgui_summary[
                     self.current_labelgui_summary.\
-                        columns[-1]] != '-1'].index:
+                        columns[-1]] != SummaryManager.unlabeled_code].index:
                 old_df.loc[img_index] = \
                     self.current_labelgui_summary.loc[img_index]
             if custom_folder is not None:
@@ -267,7 +274,7 @@ class SummaryManager:
                     (self.current_labelgui_summary.status == 'free') \
                     & (self.current_labelgui_summary[
                         self.current_labelgui_summary.\
-                        columns[-1]] == '-1')
+                        columns[-1]] == SummaryManager.unlabeled_code)
                     ].index
             free_unlabeled_images = free_unlabeled_images[:batch_size]
             if self._clone_batch_images(free_unlabeled_images):
@@ -318,7 +325,8 @@ class SummaryManager:
         dt1 = pd.read_csv(source_summary, index_col=0, sep=',')
         dt2 = pd.read_csv(target_summary, index_col=0, sep=',')
         if only_labeled:
-            dt1 = dt1[dt1[self.labels[0]] != -1]
+            dt1 = dt1[dt1[self.labels[0]] != \
+                int(SummaryManager.unlabeled_code)]
         #labeled_samples2 = dt2[labels[0] != -1].copy()
         for sample in dt1.index.values:
             samplein = sample in dt2.index
@@ -365,7 +373,7 @@ class SummaryManager:
         df = self._load_csv(summary_filepath)
         if len(new_labels) > 0:
             for label in new_labels:
-                df[label] = -1
+                df[label] = int(SummaryManager.unlabeled_code)
             df.to_csv(summary_filepath)
         return df
         
@@ -429,10 +437,10 @@ class SummaryManager:
                         img_filename[pitch_ini_index:img_filename.\
                             find('.png', pitch_ini_index)]
 
-                    # -1 (N/A), 0 - Not present, 1 - Present
-                    labels_str = '-1'
+                    # -10 (N/A),-1 -> Not present, 0 -> Uncertain, 1 -> Present
+                    labels_str = SummaryManager.unlabeled_code
                     for _ in self.labels[1:]:
-                        labels_str += f',-1'
+                        labels_str += f',{SummaryManager.unlabeled_code}'
                     # v2: img_name, lat(missing), lon(missing), heading, pitch, timestamp(missing), status, labels...
                     summary_line = (
                         f'{img_filename}'

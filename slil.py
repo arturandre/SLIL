@@ -104,6 +104,10 @@ def on_close():
         else:
             window.Close()
             exit()
+        # The program shouldn't reach this point!
+        return True
+    else:
+        return False
 window.TKroot.protocol("WM_DELETE_WINDOW", on_close)
 
 window.bind("<Key>", '')
@@ -322,8 +326,9 @@ while True:
         print(f'char: {window.user_bind_event.char}, {type(window.user_bind_event.char)}')
         print(f'keysym: {window.user_bind_event.keysym}, {type(window.user_bind_event.keysym)}')
     
-    if event is None:  # if user closes window
-        break
+    if (event is None) or event == "Quit":  # if user closes window
+        if on_close():
+            break
     elif event == 'Export batch':  # Export -> Export batch button
         text = sg.popup_get_text("How many images should be exported?",
                                  title='Export images',

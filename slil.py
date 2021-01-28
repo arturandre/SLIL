@@ -95,8 +95,7 @@ def on_close():
             close_save = sg.\
                 popup_yes_no('There are changes not saved, wish to save them before exiting?')
             if close_save == "Yes":
-                sel_labels = [cb[0].get() for cb in labels_col[:len(summary_manager.labels)]]
-                summary_manager.save_sample_labels(current_sample_index, sel_labels)
+                save_in_memory()
                 summary_manager.update_summary()
             if close_save is not None:
                 window.Close()
@@ -458,11 +457,12 @@ while True:
                     continue
                 elif window.user_bind_event.char.isdigit():  # Number keys
                     waiting_decision = True
-                    pressedNum = int(window.user_bind_event.char)
+                    pressedNum = int(window.user_bind_event.char) - 1
+                    
                 elif waiting_decision and (window.user_bind_event.char in ['a', 's', 'd']):
                     decision = ['a', 's', 'd'].index(window.user_bind_event.char)
                     decision = ['n', 'u', 'p'][decision]
-                    if pressedNum < len(summary_manager.labels):
+                    if (pressedNum >= 0) and (pressedNum < len(summary_manager.labels)):
                         check_label_checkbox(pressedNum, decision)
                 if not window.user_bind_event.char.isdigit():  # Number keys
                     waiting_decision = False

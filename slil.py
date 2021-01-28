@@ -9,6 +9,8 @@ import webbrowser
 import os
 import re
 
+import clipboard
+
 menu_def = [['&File',
     ['&Choose folder',
     'S&ave labels',
@@ -35,7 +37,9 @@ sgImage = sg.Image(size=(640, 640), key='displayImage')
 img_col = []
 
 img_col.append([sgImage])
-img_col.append([sg.Text('Image name: -' + '-'*140, key="txt_img_name")])
+img_col.append([
+    sg.Text('Image name: -' + '-'* 140, key="txt_img_name"),
+    sg.Button('Copy to clipboard', key='btCpClip')])
 
 labels_col = []
 
@@ -67,7 +71,8 @@ labels_col.append([sg.Button('<- Previous'), sg.Button('Next ->')])
 labels_col.append([sg.Checkbox('Auto-save', default=False, key="cbautosave")])
 labels_col.append([sg.Checkbox('Only unlabeled', default=False, key="cbunlabeled")])
 labels_col.append([sg.Checkbox('Ignore exported', default=True, key="cbexported")])
-labels_col.append([sg.Text('Image index: 000000/000000', key="txt_img_index")])
+labels_col.append([
+    sg.Text('Image index: 000000/000000', key="txt_img_index")])
 
 labels_col.append([sg.Text('Check on GSV:')])
 labels_col.append([sg.Button('Pano'), sg.Button('Coordinates')])
@@ -116,6 +121,7 @@ current_sample_index = -1
 current_pano = None
 current_heading = None
 current_pitch = None
+current_img_name = None
 
 def get_next_unlabeled(backwards=False, ignore_unlabeled=False, ignore_exported=False):
     global current_sample_index
@@ -219,12 +225,12 @@ def set_sample_labels(index):
             labels_col[line_idx][-1]\
                 .update('*' if current_label[1] in [int(unlabeled_code), unlabeled_code] else '')
 
-
 def load_sample(index):
     global current_sample_index
     global current_pano
     global current_heading
     global current_pitch
+    global current_img_name
     if summary_manager.is_summary_loaded():
         img_name = summary_manager.current_labelgui_summary.index[index]
         imgFilename = os.path.join(
@@ -250,10 +256,12 @@ def load_sample(index):
                 f"{index}/"
                 f"{len(summary_manager.current_labelgui_summary) - 1}"
             ))
+
+        current_img_name = img_name
         window['txt_img_name'].\
             update((
                 "Image name: "
-                f"{img_name}"
+                f"{current_img_name}"
             ))
         print(img_name)
         
@@ -389,6 +397,11 @@ while True:
                 save_in_memory()
                 summary_manager.update_summary(text)
             continue
+        elif event == 'btCpClip':
+            clipboard.copy(current_img_name)
+            print(f'Copied {current_img_name} to clipboard.')
+
+            current_img_name
         elif event == 'Save':
             save_in_memory()
             summary_manager.update_summary()

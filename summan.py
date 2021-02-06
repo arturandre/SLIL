@@ -394,8 +394,7 @@ class SummaryManager:
         for f in os.listdir(folder_path):
             if f.endswith('.png'):
                 self.img_filenames.append(f)
-        self.current_labelgui_summary_filepath = \
-            os.path.join(folder_path, self.get_summary_filename())
+        self.current_labelgui_summary_filepath = self.get_summary_filename()
         if not os.path.isfile(self.current_labelgui_summary_filepath):
             # @TODO: Show popup asking if the summary file
             # (labelgui.smr) should be created

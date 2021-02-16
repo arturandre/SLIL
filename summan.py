@@ -23,7 +23,7 @@ class SummaryManager:
 
         self.labels = custom_config.get('labels')\
             or SummaryManager.labels
-        self.label_dependencies = {}
+        self.label_dependents = {}
         self._check_labels_dependencies()
         
 
@@ -41,14 +41,14 @@ class SummaryManager:
         pass
 
     def _check_labels_dependencies(self):
-        self.label_dependencies = {}
+        self.label_dependents = {}
         for i, label in enumerate(self.labels):
             if '>' in label:
                 label, dependencies = label.split('>')
                 # Removing the '(' and ')' characters"
                 dependencies = dependencies[1:-1]
                 self.labels[i] = label
-                self.label_dependencies[label] = dependencies.split('+')
+                self.label_dependents[label] = dependencies.split('+')
 
     def get_default_headers(self):
         all_headers = self._get_headers().split(',')

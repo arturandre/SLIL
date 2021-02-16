@@ -298,15 +298,28 @@ def check_label_checkbox(label_index, label_decision, mouse_click=False):
     #sel_checkbox.update(not checked)
     # Checking dependencies
     #sel_label = sel_checkbox.Text
-    sel_label = sel_radio_line[-2].DisplayText
-    if label_decision == 1: # 
-        if sel_label in summary_manager.label_dependencies.keys():
-            deps = summary_manager.label_dependencies[sel_label]
+    selected_label = sel_radio_line[-2].DisplayText
+    # Turns true depencies from a dependent label
+    if label_decision == 1:
+        if selected_label in summary_manager.label_dependents.keys():
+            dependencies = summary_manager.label_dependents[selected_label]
             for i in range(len(summary_manager.labels)):
-                aux_radio_line = labels_col[i]
-                aux_radio = aux_radio_line[2]
-                if aux_radio_line[-2].DisplayText in deps:
+                i_radioline = labels_col[i]
+
+                # radio button corresponding to the option '1'
+                aux_radio = i_radioline[2] 
+                if i_radioline[-2].DisplayText in dependencies:
                     aux_radio.update(True)
+    # Turns false dependents from a dependency label
+    elif label_decision == -1:
+        for key in summary_manager.label_dependents.keys():
+            selected_label_dependencies = summary_manager.label_dependents[key]
+            if selected_label in selected_label_dependencies:
+                i_radioline = summary_manager.labels.index(key)
+
+                # radio button corresponding to the option '-1'
+                aux_radio = labels_col[i_radioline][0]
+                aux_radio.update(True)
 
 # Event Loop to process "events" and get the "values" of the inputs
 while True:

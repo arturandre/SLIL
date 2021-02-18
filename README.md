@@ -92,5 +92,5 @@ by setting **labels** from
 
 to
 
-`labels = 'Tree,Pole w/ wire,Intersection,Cars'`.
+`labels = 'Tree,Pole w/ wire,Intersection,Car'`.
 

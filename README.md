@@ -19,7 +19,7 @@ the requirements.txt by running for example:
 
 Then you can run the code running:
 
-`python3 slim.py`
+`python3 slil.py`
 
 ## Ok, it runs, now what?
 
@@ -62,7 +62,7 @@ is the first (image with the index 0).
 - The **Only unlabeled** checkbox skips images that were
 already labeled.
 
-***Warning: *** If you keep 'Auto-save' and 'Only unlabeled' both checked, and accidentally press the 'Next' or 'Previous' button will result in the current labels being saved and an attempt to come back to fix it will skip it because now that image is no longer unlabelled. If you need to come back to an already labeled image firstly you need to uncked the 'Only unlabeled' checkbox.
+**Warning:** If you keep 'Auto-save' and 'Only unlabeled' both checked, and accidentally press the 'Next' or 'Previous' button will result in the current labels being saved and an attempt to come back to fix it will skip it because now that image is no longer unlabelled. If you need to come back to an already labeled image firstly you need to uncked the 'Only unlabeled' checkbox.
 
 - The **Ignore exported** checkbox will skip images marked as exported.
 

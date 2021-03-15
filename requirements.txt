@@ -2,3 +2,4 @@ pandas~=1.0.3
 imageio~=2.8.0
 PySimpleGUI~=4.18.2
 Pillow~=7.1.2
+clipboard~=0.0.4

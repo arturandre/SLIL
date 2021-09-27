@@ -11,19 +11,77 @@ import re
 
 import clipboard
 
-menu_def = [['&File',
-    ['&Choose folder',
-    'S&ave labels',
-    '&Save as labels',
-    '&Load labels',
-    '&Quit']
-    ],
-    ['&Edit',
-    ['&Go to',
-    '&Export batch',
-    '&Merge (import batch)']
-    ]
+from menu import *
+
+file_menu = FileMenu()
+edit_menu = EditMenu()
+
+# 'Choose &summary file'
+def bt_ld_smr(menu_button, *args, **kwargs):
+    summary_manager = kwargs['summary_manager']
+    text = sg.popup_get_file("Select the summary file to load",
+            title="Select summary file",
+            default_extension=".smr",
+            file_types=(('Summary file', '.smr'), ('ALL Files', '*.*'),),
+            )
+    summary_manager.load_summary_file(text)
+    
+file_menu["bt_ld_smr"].set_handler(bt_ld_smr)
+
+# 'Choose &images folder'
+def bt_ld_img(menu_button, *args, **kwargs):
+    summary_manager = kwargs['summary_manager']
+    picture_folder = sg.popup_get_folder('Please select a pictures folder')
+    if picture_folder is not None:
+        if not os.path.exists(picture_folder):
+            sg.popup('The folder', picture_folder, 'couldn\'t be found or is inaccessible!')
+        else:
+            summary_manager.load_images_folder(picture_folder)
+
+            if summary_manager.is_summan_ready():
+                current_sample_index = 0
+                while not load_sample(current_sample_index):
+                    if summary_manager.count_samples() > current_sample_index+1:
+                        current_sample_index += 1
+                    else:
+                        sg.popup("The current folder doesn't have any of the images in the loaded summary file!")
+                        break
+    
+
+                
+
+
+file_menu["bt_ld_img"].set_handler(bt_ld_img)
+
+# 'S&ave labels'
+def bt_sv_lbl(menu_button):
+    pass
+file_menu["bt_sv_lbl"].set_handler(bt_sv_lbl)
+
+# '&Save as labels'
+def bt_sv_lbl_as(menu_button):
+    pass
+file_menu["bt_sv_lbl_as"].set_handler(bt_sv_lbl_as)
+
+# '&Load labels'
+def bt_ld_lbl(menu_button):
+    pass
+file_menu["bt_ld_lbl"].set_handler(bt_ld_lbl)
+
+# '&Quit'
+def bt_quit(menu_button):
+    pass
+file_menu["bt_quit"].set_handler(bt_quit)
+
+
+
+menu_def = [
+    file_menu.to_simpleGui_list(),
+    edit_menu.to_simpleGui_list(),
 ]
+
+file_menu.check_handlers()
+edit_menu.check_handlers()
 
 from summan import SummaryManager
 
@@ -129,7 +187,7 @@ current_img_name = None
 def get_next_unlabeled(backwards=False, ignore_unlabeled=False, ignore_exported=False):
     global current_sample_index
     step = 1 if not backwards else -1
-    if summary_manager.is_summary_loaded():
+    if summary_manager.is_summan_ready():
         last_col = summary_manager.current_labelgui_summary.columns[-1]
         # if not backwards:
         next_unlabeled_ones = summary_manager.current_labelgui_summary.iloc[
@@ -155,7 +213,7 @@ def get_next_unlabeled(backwards=False, ignore_unlabeled=False, ignore_exported=
 
 def decrease_sample_index():
     global current_sample_index
-    if summary_manager.is_summary_loaded():
+    if summary_manager.is_summan_ready():
         last_index = current_sample_index
         ignore_unlabeled = window['cbunlabeled'].get()
         ignore_exported = window['cbexported'].get()
@@ -182,7 +240,7 @@ def decrease_sample_index():
 
 def increase_sample_index():
     global current_sample_index
-    if summary_manager.is_summary_loaded():
+    if summary_manager.is_summan_ready():
         last_index = current_sample_index
         ignore_unlabeled = window['cbunlabeled'].get()
         ignore_exported = window['cbexported'].get()
@@ -208,7 +266,7 @@ def increase_sample_index():
 
 
 def set_sample_labels(index):
-    if summary_manager.is_summary_loaded():
+    if summary_manager.is_summan_ready():
         current_labels = summary_manager.current_labelgui_summary.iloc[index][-len(summary_manager.labels):]
         for current_label in enumerate(current_labels):
             # Radio buttons
@@ -234,11 +292,12 @@ def load_sample(index):
     global current_heading
     global current_pitch
     global current_img_name
-    if summary_manager.is_summary_loaded():
+    if summary_manager.is_summan_ready():
         img_name = summary_manager.current_labelgui_summary.index[index]
-        imgFilename = os.path.join(
-            os.path.dirname(summary_manager.current_labelgui_summary_filepath),
-            img_name)
+        img_folder = summary_manager.imgs_folder
+        imgFilename = os.path.join(img_folder, img_name)
+        if not os.path.isfile(imgFilename):
+            return False
         #_panoid_-zFcDmsqVM0Sfw0yQSzlcg_heading_135_pitch_-4
         current_sample_index = index
         heading_idx = img_name.index("_heading_")
@@ -256,8 +315,8 @@ def load_sample(index):
         window['txt_img_index'].\
             update((
                 "Image index: "
-                f"{index}/"
-                f"{len(summary_manager.current_labelgui_summary) - 1}"
+                f"{index+1}/"
+                f"{len(summary_manager.current_labelgui_summary)}"
             ))
 
         current_img_name = img_name
@@ -341,7 +400,14 @@ while True:
     if (event is None) or event == "Quit":  # if user closes window
         if on_close():
             break
-    elif event == 'Export batch':  # Export -> Export batch button
+
+    if event in file_menu:
+        print(f"event FileMenu {event}")
+        file_menu[event].click(summary_manager=summary_manager)
+    elif event in edit_menu:
+        print(f"event EditMenu {event}")
+    
+    if event == 'Export batch':  # Export -> Export batch button
         text = sg.popup_get_text("How many images should be exported?",
                                  title='Export images',
                                  default_text='1000')
@@ -356,10 +422,10 @@ while True:
                                  )
         summary_manager.merge_summary(text)
         pass
-    elif event == 'Choose folder':  # File -> Choose folder button
+    elif event == "ch_smr_fd":  # File -> Choose folder button
         picture_folder = sg.popup_get_folder('Please select a pictures folder')
         if picture_folder is not None:
-            sg.popup('Results', 'The value returned from PopupGetFolder', picture_folder)
+            #sg.popup('Results', 'The value returned from PopupGetFolder', picture_folder)
             if not os.path.exists(picture_folder):
                 sg.popup('The folder', picture_folder, 'couldn\'t be found or is inaccessible!')
             else:
@@ -390,11 +456,16 @@ while True:
                 
                 summary_manager.load_images_folder(picture_folder)
 
-                if summary_manager.is_summary_loaded():
+                if summary_manager.is_summan_ready():
                     current_sample_index = 0
-                    load_sample(current_sample_index)
-                    
-    elif summary_manager.is_summary_loaded():
+                    while not load_sample(current_sample_index):
+                        if len(summary_manager.count_samples()) > current_sample_index:
+                            current_sample_index += 1
+                        else:
+                            sg.popup("The current folder doesn't have any of the images in the loaded summary file!")
+                            break
+
+    elif summary_manager.is_summan_ready():
         if window["cbautosave"].get():
             save_in_memory()
         if event == 'Save labels':

@@ -16,7 +16,7 @@ summary_filename_no_ext = 'summan'
 # Notice it must contain the dot
 summary_filename_ext = '.smr'
 
-# The labels to be created. Notice that this
+# The labels to be created. Notice that
 # changing labels for a already existing summary
 # is not possible without editing it externally.
 labels = 'Tree,Pole w/ wire,Intersection>(Tree+Pole w/ wire)'

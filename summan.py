@@ -9,11 +9,36 @@ class SummaryManager:
     positive_label = '1'
     negative_label = '-1'
     uncertain_label = '0'
-    def __init__(self, custom_config={}):
+
+
+    def _reset_images_folder(self):
+        """
+        Resets the list holding the list of image names of
+        the current session. Notice that if the summary file
+        is loaded it will be kept.
+        
+        """
+        self.img_filenames = []
+        self.imgs_folder = None
+
+    def _reset_labelgui_summary(self):
+        """
+        Resets the currently loaded summary file, and folder.
+        Notice that if there are any image folder loaded it will
+        be kept as it is.
+        """
         self.current_labelgui_summary_dirpath = None
         self.current_labelgui_summary_filepath = None
         self.current_labelgui_summary = None
-        # custom configs
+        self.unsaved = False
+
+
+    def _reset_session(self):
+        self._reset_images_folder()
+        self._reset_labelgui_summary()
+
+    def __init__(self, custom_config={}):
+        # customizable configs
         self.summary_filename_no_ext = \
             custom_config.get('summary_filename_no_ext')\
             or SummaryManager.summary_filename_no_ext
@@ -35,9 +60,7 @@ class SummaryManager:
             f"{self.summary_filename_ext}"
         ))
 
-
-        self.unsaved = False
-        self.img_filenames = []
+        self._reset_session()
         pass
 
     def _check_labels_dependencies(self):
@@ -87,7 +110,7 @@ class SummaryManager:
         then this function can be used to retrieve
         the entries corresponding to annotated images.
         """
-        if self.is_summary_loaded():
+        if self._is_summary_loaded():
             return self.current_labelgui_summary[
                 self.current_labelgui_summary[
                     self.labels[0]
@@ -100,8 +123,16 @@ class SummaryManager:
         entries of the opened summary file that
         are annotated.
         """
-        if self.is_summary_loaded():
+        if self._is_summary_loaded():
             return len(self.get_labeled_samples())
+    
+    def count_samples(self):
+        """
+        Returns how many images are referenced at the loaded
+        summary file.
+        """
+        if self._is_summary_loaded():
+            return len(self.current_labelgui_summary)
 
     def get_summary_filename(self):
         """
@@ -121,11 +152,23 @@ class SummaryManager:
         else:
             raise Exception("No summary path informed!")
 
-    def is_summary_loaded(self):
+    def _is_summary_loaded(self):
         """
         Checks if some summary file is currently loaded
         """
         return self.current_labelgui_summary is not None
+
+    def _is_images_folder_loaded(self):
+        """
+        Checks if a folder with images and the images themselves are loaded.
+        """
+        return self.imgs_folder is not None
+    
+    def is_summan_ready(self):
+        """
+        Checks if a summary file and images are loaded to be presented.
+        """
+        return self._is_summary_loaded() and self._is_images_folder_loaded()
 
     def save_sample_labels(self, index, labels):
         """
@@ -138,7 +181,7 @@ class SummaryManager:
         labels <Tuple<int>> - Values to be stashed in the labels
             section (last fields) of the 'index' rox.
         """
-        if self.is_summary_loaded():
+        if self._is_summary_loaded():
             row = self.current_labelgui_summary.iloc[index]
             # labels are always the last fields in the summary file
             for label in enumerate(
@@ -152,7 +195,7 @@ class SummaryManager:
         Avoids the conflict handler algorithm (_N appending)
         and overwrites the current summary file.
         """
-        if self.is_summary_loaded():
+        if self._is_summary_loaded():
             self.\
                 current_labelgui_summary.\
                     to_csv(self.current_labelgui_summary_filepath)
@@ -169,7 +212,7 @@ class SummaryManager:
 
         import_summary_filepath <str> - External (e.g exported) summary file
         """
-        if self.is_summary_loaded():
+        if self._is_summary_loaded():
             if os.path.isfile(import_summary_filepath):
                 merge_df = self._load_csv(import_summary_filepath)
                 indices = merge_df[merge_df[self.labels[0]] != \
@@ -200,7 +243,7 @@ class SummaryManager:
             different from the one opened firstly
         :return:
         """
-        if self.is_summary_loaded():
+        if self._is_summary_loaded():
             old_df = self.\
                 _load_csv(self.current_labelgui_summary_filepath)
             for img_index in self.current_labelgui_summary[
@@ -268,7 +311,7 @@ class SummaryManager:
 
         batch_size <int >= 0> - Maximum number of images to export
         """
-        if self.is_summary_loaded():
+        if self._is_summary_loaded():
             free_unlabeled_images = \
                 self.current_labelgui_summary[
                     (self.current_labelgui_summary.status == 'free') \
@@ -377,87 +420,135 @@ class SummaryManager:
             df.to_csv(summary_filepath)
         return df
         
-    
+    def load_summary_file(self, filepath):
+        """
+        Loads just the summary file. Notice that after loading
+        the summary file an images folder must be loaded as well.
+        """
+
+        self._reset_session()
+
+        if os.path.isfile(filepath):
+            self.current_labelgui_summary_filepath = filepath
+            self.current_labelgui_summary_dirpath = os.path.split(filepath)[0]
+            self.current_labelgui_summary = self._load_csv(filepath)
+        else:
+            raise Exception("Summary file could not be open or accessed")
+
 
     def load_images_folder(self, folder_path):
         """
-        Loads a summary or creates one based on the
-        existing images on the 'folder_path'.
+        Sets the images list of the session as the images
+        referenced in the loaded summary file and present in
+        the 'folder_path' argument.
 
+        If no summary is loaded then this function tries to
+        load one from the 'folder_path' with the name configured
+        in the configuration file **summarymanager_config.txt**.
+
+        If there is no summary file with the name defined in the 
+        configuration file, then an exception is raised.
+        
         Params:
         
         folder_path <str> - Folder with images and possible a
             summary file for those images.
         """
-        self.current_labelgui_summary_dirpath = folder_path
+
+        self._reset_images_folder()
+
+
+        if self.current_labelgui_summary_filepath is None:
+
+            # If there is no summary file loaded then one is loaded from the
+            # 'folder_path' if possible.
+            #
+            # Get the name of summan file as defined in the configuration file
+            # and checks if there is an summary file at 'folder_path'
+            summary_filepath = os.path.join(folder_path, self.get_summary_filename())
+            if os.path.isfile(summary_filepath):
+                self.current_labelgui_summary_filepath = summary_filepath
+                self.current_labelgui_summary_dirpath = folder_path
+                self.current_labelgui_summary = self._load_csv(summary_filepath)
+            else:
+                # Asks if the user wants to create a summary file at 'folder_path' using the
+                # '.png' images available in the folder and the classes defined in the configuration file.
+                raise Exception(
+                    f'Summary file not loaded and not found in the images folder. '
+                    f'Try to load a summary file first, or create one (File->Create summary in folder).'
+                    )
+        else:
+            for f in os.listdir(folder_path):
+                if f.endswith('.png'):
+                    self.img_filenames.append(f)
+            self.imgs_folder = folder_path
+            pass
+
+
+
+    def load_image_create_summary(self, folder_path):
+        """
+        Creates a summary file, named according to the configuration file,
+        at 'folder_path', referencing '.png' images in the folder.
+
+        If a summary file with the same name already exists in the folder then
+        an exception will be raised.
+        one will be created at 'folder_path'
+        and the created summary file will reference the images inside
+        the folder at 'folder_path'.
+        """
+
+        self._reset_session()
+
+        summary_filepath = os.path.join(folder_path, self.get_summary_filename())
+        if os.path.isfile(summary_filepath):
+            raise Exception(
+                f"Summary file found at the images folder. "
+                f"Load the image folder using (File -> Load images folder)."
+                )
 
         for f in os.listdir(folder_path):
             if f.endswith('.png'):
                 self.img_filenames.append(f)
-        self.current_labelgui_summary_filepath = self.get_summary_filename()
-        if not os.path.isfile(self.current_labelgui_summary_filepath):
-            # @TODO: Show popup asking if the summary file
-            # (labelgui.smr) should be created
-            with open(self.current_labelgui_summary_filepath, 'w+')\
-                as summary_file:
-                summary_file.write(self._get_headers())
-                summary_file.write('\n')
+        with open(self.current_labelgui_summary_filepath, 'w+')\
+            as summary_file:
+            summary_file.write(self._get_headers())
+            summary_file.write('\n')
         df = self._load_csv(self.current_labelgui_summary_filepath)
-
-        # Check for new labels:
-        #current_headers_list = self.get_settings_header()
-        #file_headers_list = [df.index.name] + list(df.columns.values)
-        #file_headers_list = self.get_summary_header(folder_path)
-        #updated_labels = False
-        #for col in current_headers_list:
-        #    if col not in file_headers_list:
-        #        df[col] = -1
-        #        updated_labels = True
-        #if updated_labels:
-        #    df.to_csv(self.current_labelgui_summary_filepath)
+        
                 
-        with open(self.current_labelgui_summary_filepath, 'a+')\
+        with open(summary_filepath, 'a+')\
             as summary_file:
             # update file if needed
             for img_filename in self.img_filenames:
-                if img_filename in df.index:
-                    continue
-                else:
-                    # img_name, coords(missing), heading, pitch, timestamp(missing), labels...
-                    heading_ini_index = \
-                        img_filename.find('heading') + \
-                            len('heading') + 1
-                    heading = \
-                        img_filename[heading_ini_index:img_filename.\
-                            find('_', heading_ini_index)]
-                    pitch_ini_index = img_filename.\
-                        find('pitch') + len('pitch') + 1
-                    pitch = \
-                        img_filename[pitch_ini_index:img_filename.\
-                            find('.png', pitch_ini_index)]
+                heading_ini_index = img_filename.find('heading') + len('heading') + 1
+                heading = img_filename[heading_ini_index:img_filename.find('_', heading_ini_index)]
+                pitch_ini_index = img_filename.find('pitch') + len('pitch') + 1
+                pitch = img_filename[pitch_ini_index:img_filename.find('.png', pitch_ini_index)]
 
-                    # -10 (N/A),-1 -> Not present, 0 -> Uncertain, 1 -> Present
-                    labels_str = SummaryManager.unlabeled_code
-                    for _ in self.labels[1:]:
-                        labels_str += f',{SummaryManager.unlabeled_code}'
-                    # v2: img_name, lat(missing), lon(missing), heading, pitch, timestamp(missing), status, labels...
-                    summary_line = (
-                        f'{img_filename}'
-                        f',missing'
-                        f',missing'
-                        f',{str(heading)}'
-                        f',{str(pitch)}'
-                        f',missing'
-                        f',free'
-                        f',{labels_str}'
-                        f'\n'
-                    )
-                    summary_file.write(summary_line)
+                # -10 -> unlabeled_code,-1 -> Not present, 0 -> Uncertain, 1 -> Present
+                labels_str = SummaryManager.unlabeled_code
+                for _ in self.labels[1:]:
+                    labels_str += f',{SummaryManager.unlabeled_code}'
+                # v2: img_name, lat(missing), lon(missing), heading, pitch, timestamp(missing), status, labels...
+                summary_line = (
+                    f'{img_filename}'
+                    f',missing'
+                    f',missing'
+                    f',{str(heading)}'
+                    f',{str(pitch)}'
+                    f',missing'
+                    f',free'
+                    f',{labels_str}'
+                    f'\n'
+                )
+                summary_file.write(summary_line)
             del df
-            self.current_labelgui_summary = \
-                self._load_csv(self.current_labelgui_summary_filepath)
+        self.current_labelgui_summary = self._load_csv(summary_filepath)
+        self.current_labelgui_summary_filepath = summary_filepath
+        self.current_labelgui_summary_dirpath = folder_path
 
-        # END: for img_filename in img_filenames:
+
 
 dirname = os.path.dirname(__file__)
 summary_filename = os.path.join(dirname, 'summarymanager_config.txt')

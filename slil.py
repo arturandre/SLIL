@@ -12,9 +12,13 @@ import re
 import clipboard
 
 from menu import *
+from altimagefolder import altimagefolder # Singleton
 
 file_menu = FileMenu()
 edit_menu = EditMenu()
+altimgs_menu = AltImageFolderMenu(altimagefolder)
+
+# File menu handlers #########################
 
 # 'Choose &summary file'
 def bt_ld_smr(menu_button, *args, **kwargs):
@@ -46,10 +50,6 @@ def bt_ld_img(menu_button, *args, **kwargs):
                     else:
                         sg.popup("The current folder doesn't have any of the images in the loaded summary file!")
                         break
-    
-
-                
-
 
 file_menu["bt_ld_img"].set_handler(bt_ld_img)
 
@@ -73,15 +73,40 @@ def bt_quit(menu_button):
     pass
 file_menu["bt_quit"].set_handler(bt_quit)
 
+# END File menu handlers
 
+# Edit menu handlers ############
+# END Edit menu handlers
 
-menu_def = [
-    file_menu.to_simpleGui_list(),
-    edit_menu.to_simpleGui_list(),
-]
+# Alternative images folder menu handlers ################
+
+def bt_add_alt_im_fd(menu_button, *args, **kwargs):
+    update_menu = kwargs["update_menu"]
+    text = sg.popup_get_file("Select the summary file to load",
+        title="Select summary file",
+        default_extension=".smr",
+        file_types=(('Summary file', '.smr'), ('ALL Files', '*.*'),),
+        )
+    if text is None: # Cancel
+        return
+    if not os.path.exists(text):
+        sg.popup("The selected folder can't be found or is not accessible!")
+        return
+    altimagefolder.insert_folder(text)
+    update_menu()
+    
+
+altimgs_menu["bt_add_alt_im_fd"].set_handler(bt_add_alt_im_fd)
+
+def bt_rem_alt_im_fd(menu_button, *args, **kwargs):
+    pass
+altimgs_menu["bt_rem_alt_im_fd"].set_handler(bt_rem_alt_im_fd)
+
+# END Alternative images folder menu handlers ############
 
 file_menu.check_handlers()
 edit_menu.check_handlers()
+altimgs_menu.check_handlers()
 
 from summan import SummaryManager
 
@@ -137,8 +162,31 @@ labels_col.append([sg.Button('Pano'), sg.Button('Coordinates')])
 
 labels_col_header = [labels_header] + labels_col
 
+def initialize_menu():
+    global file_menu
+    global edit_menu
+    global altimgs_menu
+    menu_def = [file_menu.to_simpleGui_list(),
+    edit_menu.to_simpleGui_list(),
+    altimgs_menu.to_simpleGui_list()]
+    general_menu = sg.Menu(menu_def, tearoff=True, key='menu')
+    return general_menu
+
+general_menu = initialize_menu()
+
+def update_menu():
+    global general_menu
+    global file_menu
+    global edit_menu
+    global altimgs_menu
+    menu_def = [file_menu.to_simpleGui_list(),
+    edit_menu.to_simpleGui_list(),
+    altimgs_menu.to_simpleGui_list()]
+    general_menu.Update(menu_def)
+
+
 # All the stuff inside your window.
-layout = [[sg.Menu(menu_def, tearoff=True, key='menu')],
+layout = [[general_menu],
           [sg.Column(img_col), sg.Column(labels_col_header)],
           ]
 
@@ -406,6 +454,10 @@ while True:
         file_menu[event].click(summary_manager=summary_manager)
     elif event in edit_menu:
         print(f"event EditMenu {event}")
+    elif event in altimgs_menu:
+        print(f"event AltImageMenu {event}")
+        altimgs_menu[event].click(update_menu=update_menu)
+        
     
     if event == 'Export batch':  # Export -> Export batch button
         text = sg.popup_get_text("How many images should be exported?",

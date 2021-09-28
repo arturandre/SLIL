@@ -3,6 +3,28 @@ class AltImageFolder:
         self.loaded_folders = []
         self._on_insert_callbacks = []
         self._on_remove_callbacks = []
+        self._current_loaded_folder = -1
+
+    def reset_current_loaded_folder(self):
+        self._current_loaded_folder = -1
+
+
+    def set_current_loaded_folder(self, folder_idx):
+        if (folder_idx < 0) or (folder_idx >= len(self.loaded_folders)):
+            raise IndexError("Selected folder index out of bounds.")
+
+        self._current_loaded_folder = folder_idx
+        return self.loaded_folders[self._current_loaded_folder]
+
+
+    def get_next_alt_folder(self):
+        self._current_loaded_folder += 1
+
+        if self._current_loaded_folder == len(self.loaded_folders):
+            self._current_loaded_folder = -1
+            return None
+        else:
+            return self.loaded_folders[self._current_loaded_folder]
 
     def get_loaded_folders(self):
         return self.loaded_folders
@@ -15,11 +37,12 @@ class AltImageFolder:
             self.on_folder_insert()
             return True
     
-    def remove_folder(self, folder):
-        if folder not in self.loaded_folders:
+    def remove_folder(self, folder_idx):
+        if (folder_idx < 0) or (folder_idx > len(self.loaded_folders)):
             return False
         else:
-            self.loaded_folders.remove(folder)
+            #self.loaded_folders.remove(folder)
+            del self.loaded_folders[folder_idx]
             self.on_folder_remove()
             return True
 

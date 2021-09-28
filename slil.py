@@ -28,6 +28,8 @@ def bt_ld_smr(menu_button, *args, **kwargs):
             default_extension=".smr",
             file_types=(('Summary file', '.smr'), ('ALL Files', '*.*'),),
             )
+    if text is None: # Cancel
+        return
     summary_manager.load_summary_file(text)
     
 file_menu["bt_ld_smr"].set_handler(bt_ld_smr)
@@ -36,20 +38,21 @@ file_menu["bt_ld_smr"].set_handler(bt_ld_smr)
 def bt_ld_img(menu_button, *args, **kwargs):
     summary_manager = kwargs['summary_manager']
     picture_folder = sg.popup_get_folder('Please select a pictures folder')
-    if picture_folder is not None:
-        if not os.path.exists(picture_folder):
-            sg.popup('The folder', picture_folder, 'couldn\'t be found or is inaccessible!')
-        else:
-            summary_manager.load_images_folder(picture_folder)
+    if picture_folder is None: # Cancel
+        return
+    if not os.path.exists(picture_folder):
+        sg.popup('The folder', picture_folder, 'couldn\'t be found or is inaccessible!')
+    else:
+        summary_manager.load_images_folder(picture_folder)
 
-            if summary_manager.is_summan_ready():
-                current_sample_index = 0
-                while not load_sample(current_sample_index):
-                    if summary_manager.count_samples() > current_sample_index+1:
-                        current_sample_index += 1
-                    else:
-                        sg.popup("The current folder doesn't have any of the images in the loaded summary file!")
-                        break
+        if summary_manager.is_summan_ready():
+            current_sample_index = 0
+            while not load_sample(current_sample_index):
+                if summary_manager.count_samples() > current_sample_index+1:
+                    current_sample_index += 1
+                else:
+                    sg.popup("The current folder doesn't have any of the images in the loaded summary file!")
+                    break
 
 file_menu["bt_ld_img"].set_handler(bt_ld_img)
 
@@ -78,15 +81,13 @@ file_menu["bt_quit"].set_handler(bt_quit)
 # Edit menu handlers ############
 # END Edit menu handlers
 
+
 # Alternative images folder menu handlers ################
 
 def bt_add_alt_im_fd(menu_button, *args, **kwargs):
     update_menu = kwargs["update_menu"]
-    text = sg.popup_get_file("Select the summary file to load",
-        title="Select summary file",
-        default_extension=".smr",
-        file_types=(('Summary file', '.smr'), ('ALL Files', '*.*'),),
-        )
+    text = sg.popup_get_folder("Select the alternative image folder",
+        title="Select an image folder")
     if text is None: # Cancel
         return
     if not os.path.exists(text):
@@ -94,15 +95,64 @@ def bt_add_alt_im_fd(menu_button, *args, **kwargs):
         return
     altimagefolder.insert_folder(text)
     update_menu()
-    
 
 altimgs_menu["bt_add_alt_im_fd"].set_handler(bt_add_alt_im_fd)
 
+
 def bt_rem_alt_im_fd(menu_button, *args, **kwargs):
-    pass
+    load_sample=kwargs["load_sample"] # Function from slil.py to load an image
+    current_sample_index=kwargs["current_sample_index"] # Currently loaded image index from slil.py
+    altfolder_number = len(altimagefolder.get_loaded_folders())
+    if altfolder_number == 0:
+        sg.popup("There are no alternative image folders to be removed.")
+        return
+
+    if altfolder_number == 1:
+        suggestion_text  = "(1)"
+    elif altfolder_number > 1:
+        suggestion_text  = f"(1-{altfolder_number})"
+
+    update_menu = kwargs["update_menu"]
+    text = sg.popup_get_text(
+        (f"Which folder would you like to remove?"
+        f"Use its order number, displayed as a shortcut in the menu {suggestion_text}."),
+                                 title='Remove alternative image folder',
+                                 default_text='1')
+    if text is None:
+        return
+    text = int(text)-1 # 0 to altfolder_number-1
+    if (text < 0) or (text > altfolder_number):
+        sg.popup("Invalid range.")
+        return
+    altimagefolder.remove_folder(text)
+    altimagefolder.reset_current_loaded_folder()
+    update_menu()
+    load_sample(current_sample_index, alternative_folder=None)
 altimgs_menu["bt_rem_alt_im_fd"].set_handler(bt_rem_alt_im_fd)
 
+
+def bt_base_im_fd(menu_button, *args, **kwargs):
+    load_sample=kwargs["load_sample"] # Function from slil.py to load an image
+    current_sample_index=kwargs["current_sample_index"] # Currently loaded image index from slil.py
+    load_sample(current_sample_index)
+    altimagefolder.reset_current_loaded_folder()
+altimgs_menu["bt_base_im_fd"].set_handler(bt_base_im_fd)
+
 # END Alternative images folder menu handlers ############
+
+"""
+1 - Verificar qual pasta alternativa foi selecionada (1, 2, ... N)
+  -- O click do botão sendo definido no "menu.py" já irá conter essa informação
+2 - Pegar o caminho da pasta selecionada (selected_folder)
+  -- Com o click definido no "menu.py" essa informação também já está lá
+3 - Trocar a pasta atualmente carregada pela nova selecionada (current_folder = selected_folder)
+  -- A pasta carregada fica no "slil.py", trocar a pasta é mais fácil por aqui.
+  -- Talvez a solução seja implementar chamadas a botões temporários de uma forma diferente.
+  -- A chamada é feita aqui, e delegada para um tratamento espcífico dentro da classe.
+4 - Trocar a image atualmente sendo exibida pela da pasta selecionada (???)
+
+"""
+
 
 file_menu.check_handlers()
 edit_menu.check_handlers()
@@ -334,7 +384,7 @@ def set_sample_labels(index):
             labels_col[line_idx][-1]\
                 .update('*' if current_label[1] in [int(unlabeled_code), unlabeled_code] else '')
 
-def load_sample(index):
+def load_sample(index, alternative_folder=None):
     global current_sample_index
     global current_pano
     global current_heading
@@ -342,7 +392,10 @@ def load_sample(index):
     global current_img_name
     if summary_manager.is_summan_ready():
         img_name = summary_manager.current_labelgui_summary.index[index]
-        img_folder = summary_manager.imgs_folder
+        if alternative_folder is None:
+            img_folder = summary_manager.imgs_folder
+        else:
+            img_folder = alternative_folder
         imgFilename = os.path.join(img_folder, img_name)
         if not os.path.isfile(imgFilename):
             return False
@@ -374,6 +427,7 @@ def load_sample(index):
                 f"{current_img_name}"
             ))
         print(img_name)
+        return True
         
     pass
 
@@ -456,7 +510,11 @@ while True:
         print(f"event EditMenu {event}")
     elif event in altimgs_menu:
         print(f"event AltImageMenu {event}")
-        altimgs_menu[event].click(update_menu=update_menu)
+        altimgs_menu[event].click(
+            update_menu=update_menu,                   # For the insert/removal of folders
+            load_sample=load_sample,                   # For the temp buttons to load alternative images
+            current_sample_index=current_sample_index # For the temp buttons to load alternative images
+            )
         
     
     if event == 'Export batch':  # Export -> Export batch button
@@ -590,6 +648,10 @@ while True:
             if len(window.user_bind_event.char) == 1:  # numbers/letters/enter keys
                 if window.user_bind_event.char == '\r':  # Enter keys
                     save_in_memory()
+                    continue
+                if window.user_bind_event.char == ' ':  # Space bar key
+                    next_alt_folder = altimagefolder.get_next_alt_folder()
+                    load_sample(current_sample_index, next_alt_folder)
                     continue
                 elif window.user_bind_event.char.isdigit():  # Number keys
                     waiting_decision = True

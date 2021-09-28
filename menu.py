@@ -15,8 +15,11 @@ su&mmary  - F-M
 &Alt.     - A
 &folder   - A-F
 &Rem.     - A-R
+&Base     - A-B
+Temps     - A-{1-9}
 """
 
+from os import stat
 from altimagefolder import AltImageFolder
 
 
@@ -134,12 +137,31 @@ class AltImageFolderMenu(Menu):
         super().__init__(title="&Alt. Image Folder")
         self.add_menu_button('Add image &folder', 'bt_add_alt_im_fd')
         self.add_menu_button('&Rem. image folder', 'bt_rem_alt_im_fd')
+        self.add_menu_button('&Base image folder', 'bt_base_im_fd')
         self.add_separator()
         altimagefolder.register_insert_callback(self._update_loaded_folders)
+        altimagefolder.register_remove_callback(self._update_loaded_folders)
+
+    @staticmethod
+    def _temp_handler(folder_idx, altimagefolder):
+        def _temp_load_folder(menu_button, *args, **kwargs):
+            alt_folder = altimagefolder.set_current_loaded_folder(folder_idx)
+            load_sample=kwargs["load_sample"] # Function from slil.py to load an image
+            current_sample_index=kwargs["current_sample_index"] # Currently loaded image index from slil.py
+            load_sample(current_sample_index, alt_folder)
+
+        return _temp_load_folder
 
     def _update_loaded_folders(self, altimagefolder):
         self.reset_temp_menu_buttons()
         for i, loaded_folder in enumerate(altimagefolder.loaded_folders):
-            self.add_temp_menu_button(loaded_folder[-15:], f"temp_{i}")
+            shortcut_key = f"{i+1}"
+            if (i <= 8):
+                # For less than 10 folders (1-9) let a keyboard shortcut (&)
+                shortcut_key = f"&{shortcut_key}"
+            
+            temp_button = self.add_temp_menu_button(title=loaded_folder[-15:] + f"     {shortcut_key}", idx=f"temp_{i}")
+            temp_button.set_handler(AltImageFolderMenu._temp_handler(folder_idx=i, altimagefolder=altimagefolder))
+            
 
 

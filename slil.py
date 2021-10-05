@@ -127,7 +127,8 @@ def bt_rem_alt_im_fd(menu_button, *args, **kwargs):
     altimagefolder.remove_folder(text)
     altimagefolder.reset_current_loaded_folder()
     update_menu()
-    load_sample(current_sample_index, alternative_folder=None)
+    #load_sample(current_sample_index, alternative_folder=None)
+    load_sample(current_sample_index)
 altimgs_menu["bt_rem_alt_im_fd"].set_handler(bt_rem_alt_im_fd)
 
 
@@ -326,7 +327,7 @@ def decrease_sample_index():
                 if not next_sample[summary_manager.labels[0]] in (int(unlabeled_code), unlabeled_code):
                     continue
             if ignore_exported:
-                if next_sample['status'] == 'exported':
+                if next_sample.get('status') == 'exported':
                     continue
             break
         load_sample(current_sample_index)
@@ -353,7 +354,7 @@ def increase_sample_index():
                 if not next_sample[summary_manager.labels[0]] in (int(unlabeled_code), unlabeled_code):
                     continue
             if ignore_exported:
-                if next_sample['status'] == 'exported':
+                if next_sample.get('status') == 'exported':
                     continue
             break
         load_sample(current_sample_index)
@@ -384,12 +385,17 @@ def set_sample_labels(index):
             labels_col[line_idx][-1]\
                 .update('*' if current_label[1] in [int(unlabeled_code), unlabeled_code] else '')
 
-def load_sample(index, alternative_folder=None):
+#def load_sample(index, alternative_folder=None):
+def load_sample(index):
     global current_sample_index
     global current_pano
     global current_heading
     global current_pitch
     global current_img_name
+
+    global altimagefolder
+    alternative_folder = altimagefolder.get_current_alt_folder()
+
     if summary_manager.is_summan_ready():
         img_name = summary_manager.current_labelgui_summary.index[index]
         if alternative_folder is None:
@@ -651,7 +657,8 @@ while True:
                     continue
                 if window.user_bind_event.char == ' ':  # Space bar key
                     next_alt_folder = altimagefolder.get_next_alt_folder()
-                    load_sample(current_sample_index, next_alt_folder)
+                    #load_sample(current_sample_index, next_alt_folder)
+                    load_sample(current_sample_index)
                     continue
                 elif window.user_bind_event.char.isdigit():  # Number keys
                     waiting_decision = True

@@ -145,10 +145,10 @@ class AltImageFolderMenu(Menu):
     @staticmethod
     def _temp_handler(folder_idx, altimagefolder):
         def _temp_load_folder(menu_button, *args, **kwargs):
-            alt_folder = altimagefolder.set_current_loaded_folder(folder_idx)
+            altimagefolder.set_current_loaded_folder(folder_idx)
             load_sample=kwargs["load_sample"] # Function from slil.py to load an image
             current_sample_index=kwargs["current_sample_index"] # Currently loaded image index from slil.py
-            load_sample(current_sample_index, alt_folder)
+            load_sample(current_sample_index)
 
         return _temp_load_folder
 

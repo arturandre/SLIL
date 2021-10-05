@@ -16,6 +16,11 @@ class AltImageFolder:
         self._current_loaded_folder = folder_idx
         return self.loaded_folders[self._current_loaded_folder]
 
+    def get_current_alt_folder(self):
+        if self._current_loaded_folder == -1:
+            return None
+        else:
+            return self.loaded_folders[self._current_loaded_folder]
 
     def get_next_alt_folder(self):
         self._current_loaded_folder += 1

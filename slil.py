@@ -32,6 +32,7 @@ def bt_ld_smr(menu_button, *args, **kwargs):
         return
     summary_manager.load_summary_file(text)
     
+    
 file_menu["bt_ld_smr"].set_handler(bt_ld_smr)
 
 # 'Choose &images folder'
@@ -86,6 +87,7 @@ file_menu["bt_quit"].set_handler(bt_quit)
 
 def bt_add_alt_im_fd(menu_button, *args, **kwargs):
     update_menu = kwargs["update_menu"]
+    # Load a new image folder
     text = sg.popup_get_folder("Select the alternative image folder",
         title="Select an image folder")
     if text is None: # Cancel
@@ -93,7 +95,19 @@ def bt_add_alt_im_fd(menu_button, *args, **kwargs):
     if not os.path.exists(text):
         sg.popup("The selected folder can't be found or is not accessible!")
         return
-    altimagefolder.insert_folder(text)
+    alternative_folder = text
+    if not os.path.exists(alternative_folder):
+        sg.popup("The selected folder can't be found or is not accessible!")
+        return
+    # Then loads the summary file
+    text = sg.popup_get_file("Select the corresponding alternative summary file",
+        title="Select a summary file for the selected image folder")
+    if text is None: # Cancel
+        return
+    alternative_summary = text
+    altimagefolder.insert_folder(
+        folder  = alternative_folder,
+        summary = alternative_summary)
     update_menu()
 
 altimgs_menu["bt_add_alt_im_fd"].set_handler(bt_add_alt_im_fd)
@@ -135,8 +149,8 @@ altimgs_menu["bt_rem_alt_im_fd"].set_handler(bt_rem_alt_im_fd)
 def bt_base_im_fd(menu_button, *args, **kwargs):
     load_sample=kwargs["load_sample"] # Function from slil.py to load an image
     current_sample_index=kwargs["current_sample_index"] # Currently loaded image index from slil.py
-    load_sample(current_sample_index)
     altimagefolder.reset_current_loaded_folder()
+    load_sample(current_sample_index)
 altimgs_menu["bt_base_im_fd"].set_handler(bt_base_im_fd)
 
 # END Alternative images folder menu handlers ############

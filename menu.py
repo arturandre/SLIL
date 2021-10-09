@@ -137,8 +137,8 @@ class AltImageFolderMenu(Menu):
         super().__init__(title="&Alt. Image Folder")
         self.add_menu_button('Add image &folder', 'bt_add_alt_im_fd')
         self.add_menu_button('&Rem. image folder', 'bt_rem_alt_im_fd')
-        self.add_menu_button('&Base image folder', 'bt_base_im_fd')
         self.add_separator()
+        self.add_menu_button('&Base image folder', 'bt_base_im_fd')
         altimagefolder.register_insert_callback(self._update_loaded_folders)
         altimagefolder.register_remove_callback(self._update_loaded_folders)
 

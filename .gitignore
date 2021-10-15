@@ -2,7 +2,7 @@ venv/
 .idea/
 __pycache__/
 .ipynb_checkpoints/
-
+ignored/
 *.log
 *.bat
 *.bak

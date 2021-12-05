@@ -4,6 +4,8 @@ __pycache__/
 .ipynb_checkpoints/
 ignored/
 
+summarymanager_config.txt
+
 *.log
 *.bat
 *.bak

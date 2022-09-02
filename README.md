@@ -1,4 +1,8 @@
 # Street Level Imagery Labeler (SLIL)
+
+![image](https://user-images.githubusercontent.com/1486993/188237025-0022acd2-d33b-432f-b552-24be8e7fffd3.png)
+
+
 ## What is it?
 
 The SLIL tool was created to help in the task

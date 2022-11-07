@@ -389,11 +389,12 @@ class SummaryManager:
         folder_path <str> - Folder with images and possible a
             summary file for those images.
         """
+        EXTENSIONS = ['.png', '.jpg']
         self.current_labelgui_summary_dirpath = folder_path
-
         for f in os.listdir(folder_path):
-            if f.endswith('.png'):
-                self.img_filenames.append(f)
+            for ext in EXTENSIONS:
+                if f.endswith('.png'):
+                    self.img_filenames.append(f)
         self.current_labelgui_summary_filepath = self.get_summary_filename()
         if not os.path.isfile(self.current_labelgui_summary_filepath):
             # @TODO: Show popup asking if the summary file
@@ -433,8 +434,7 @@ class SummaryManager:
                     pitch_ini_index = img_filename.\
                         find('pitch') + len('pitch') + 1
                     pitch = \
-                        img_filename[pitch_ini_index:img_filename.\
-                            find('.png', pitch_ini_index)]
+                        img_filename[pitch_ini_index:-4]
 
                     # -10 (N/A),-1 -> Not present, 0 -> Uncertain, 1 -> Present
                     labels_str = SummaryManager.unlabeled_code

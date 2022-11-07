@@ -389,11 +389,64 @@ class SummaryManager:
         folder_path <str> - Folder with images and possible a
             summary file for those images.
         """
-        EXTENSIONS = ['.png', '.jpg']
+        EXTENSIONS = ['.264','.265','.3fr',
+            '.3g2','.3g2','.3g2','.3g2',
+            '.3gp','.3gp','.3gp','.3gp',
+            '.A64','.IMT','.MCIDAS','.PCX',
+            '.SPIDE','.XVTHUMB','.a64','.adp',
+            '.amr','.amv','.apng','.arw',
+            '.asf','.asf','.avc','.avi','.avi',
+            '.avr','.avs','.avs2','.avs3','.bay',
+            '.bl','.bmp','.bmq','.bmv','.bsdf',
+            '.bufr','.bw','.cap','.cavs','.cdg',
+            '.cdxl','.cgi','.chk','.cif','.cine',
+            '.cpk','.cr','.cr','.cs','.ct','.cur',
+            '.cut','.dat','.dav','.dc','.dcm','.dc',
+            '.dcx','.dds','.dib','.dicom','.dif',
+            '.dip','.dn','.dnxhd','.dnxhr','.dp','.drc',
+            '.dr','.ds','.dv','.dvd','.ecw','.emf','.eps',
+            '.er','.exr','.f4v','.f4v','.f4v','.f4v','.f4v',
+            '.ff','.fit','.fits','.flc','.fli','.flm','.flv',
+            '.flv','.fpx','.ftc','.fts','.ftu','.fz',
+            '.g3','.gbr','.gdcm','.gif','.gipl','.grib',
+            '.gsm','.gxf','.h261','.h263','.h264',
+            '.h265','.h26l','.h5','.hdf','.hdf5','.hdp',
+            '.hdr','.hevc','.i','.ic','.icns','.ico',
+            '.idf','.iff','.ifv','.iim','.ii','.im','.im',
+            '.im2','.im','.im','.im','.imx','.ipl','.ipu',
+            '.ism','.ism','.ism','.ism','.isma','.isma',
+            '.isma','.isma','.ismv','.ismv','.ismv','.ismv',
+            '.ivf','.ivr','.j2c','.j2k','.j2k','.jfif','.jif',
+            '.jl','.jng','.jp2','.jpc','.jpe','.jpeg','.jpf',
+            '.jpg','.jpx','.jxr','.k2','.kc','.kd','.koa','.kux',
+            '.lbm','.lfp','.lfr','.ljp','.lsm','.lvf','.m1v',
+            '.m2t','.m2ts','.m2v','.m4a','.m4a','.m4a','.m4a',
+            '.m4a','.m4b','.m4b','.m4b','.m4b','.m4b','.m4v',
+            '.m4v','.md','.me','.mgh','.mha','.mhd','.mic','.mj2',
+            '.mj2','.mj2','.mj2','.mjpeg','.mjpg','.mjpg','.mjpg',
+            '.mk3d','.mk3d','.mka','.mka','.mks','.mks','.mkv',
+            '.mnc','.mnc2','.mods','.moflex','.mos','.mov','.mp4',
+            '.mpc','.mpd','.mpeg','.mpeg','.mpg','.mpg','.mpo',
+            '.mpo','.mri','.mr','.msp','.mts','.mvi','.mxf','.mxf',
+            '.mxg','.ne','.nhd','.ni','.ni','.ni','.npz','.nrr','.nr',
+            '.nut','.obu','.obu','.ogg','.ogv','.or','.pal',
+            '.pa','.pbm','.pbm','.pcd','.pct','.pc','.pd','.pe',
+            '.pf','.pgm','.pgmyu','.pic','.pict','.pi','.png','.pnm',
+            '.ppm','.ppm','.ppm','.pp','.ps','.psd','.psp','.psp',
+            '.psp','.psp','.psp','.pt','.pxm','.px','.pxr','.qcif',
+            '.qt','.ra','.ras','.ra','.rcv','.rd','.rgb','.rgb',
+            '.rgba','.rm','.roq','.r','.rw','.rw','.rw','.sdr2','.ser',
+            '.sga','.sgi','.spe','.sr','.sr','.sr','.sr','.st','.st',
+            '.su','.sunra','.svag','.svs','.swf','.targa','.tga','.tif',
+            '.tiff','.ts','.ty','.t','.v','.v210','.vb','.vc1','.vc2',
+            '.vd','.viv','.vob','.vob','.vs','.vt','.wap','.wbm','.wbmp',
+            '.wdp','.webm','.webp','.wmf','.wmv','.wmv','.wmv','.wtv',
+            '.xbm','.xfac','.xl','.xmv','.xpm','.xw','.','.y4m','.yop',
+            '.yuv','.yuv10']
         self.current_labelgui_summary_dirpath = folder_path
         for f in os.listdir(folder_path):
             for ext in EXTENSIONS:
-                if f.endswith('.png'):
+                if f.endswith(ext):
                     self.img_filenames.append(f)
         self.current_labelgui_summary_filepath = self.get_summary_filename()
         if not os.path.isfile(self.current_labelgui_summary_filepath):
@@ -434,7 +487,8 @@ class SummaryManager:
                     pitch_ini_index = img_filename.\
                         find('pitch') + len('pitch') + 1
                     pitch = \
-                        img_filename[pitch_ini_index:-4]
+                        img_filename[pitch_ini_index:img_filename.\
+                            find('.', pitch_ini_index)]
 
                     # -10 (N/A),-1 -> Not present, 0 -> Uncertain, 1 -> Present
                     labels_str = SummaryManager.unlabeled_code

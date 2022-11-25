@@ -29,6 +29,9 @@ from summan import SummaryManager
 
 sg.theme('DarkAmber')  # Add a touch of color
 
+#defaultFont = None
+defaultFont = ("Helvetica", 12)
+
 window = None
 sgImage = None
 
@@ -38,8 +41,8 @@ img_col = []
 
 img_col.append([sgImage])
 img_col.append([
-    sg.Text('Image name: -' + '-'* 140, key="txt_img_name"),
-    sg.Button('Copy to clipboard', key='btCpClip')])
+    sg.Text('Image name: -' + '-'* 25, key="txt_img_name", font=defaultFont),
+    sg.Button('Copy to clipboard', key='btCpClip', font=defaultFont)])
 
 labels_col = []
 
@@ -53,29 +56,29 @@ waiting_decision = False
 
 summary_manager = SummaryManager()
 labels_header = [
-    sg.Text('-1   '),
-    sg.Text('0   '),
-    sg.Text('1'),
+    sg.Text('-1   ', font=defaultFont),
+    sg.Text('0   ', font=defaultFont),
+    sg.Text('1', font=defaultFont),
     ]
 
 for i, label in enumerate(summary_manager.labels):
     labels_col.append([
-        sg.Radio('', f"label{i}", enable_events=True, key=f'label_n{i}'),
-        sg.Radio('', f"label{i}", enable_events=True, key=f'label_u{i}'),
-        sg.Radio('', f"label{i}", enable_events=True, key=f'label_p{i}'),
-        sg.Text(label),
-        sg.Text('*', key=f'unlabeled_{i}'),
+        sg.Radio('', f"label{i}", enable_events=True, key=f'label_n{i}', font=defaultFont),
+        sg.Radio('', f"label{i}", enable_events=True, key=f'label_u{i}', font=defaultFont),
+        sg.Radio('', f"label{i}", enable_events=True, key=f'label_p{i}', font=defaultFont),
+        sg.Text(label, font=defaultFont),
+        sg.Text('*', key=f'unlabeled_{i}', font=defaultFont),
         ])
 labels_col.append([sg.Button('Save')])
-labels_col.append([sg.Button('<- Previous'), sg.Button('Next ->')])
-labels_col.append([sg.Checkbox('Auto-save', default=False, key="cbautosave")])
-labels_col.append([sg.Checkbox('Only unlabeled', default=False, key="cbunlabeled")])
-labels_col.append([sg.Checkbox('Ignore exported', default=True, key="cbexported")])
+labels_col.append([sg.Button('<- Previous', font=defaultFont), sg.Button('Next ->', font=defaultFont)])
+labels_col.append([sg.Checkbox('Auto-save', font=defaultFont, default=True, key="cbautosave")])
+labels_col.append([sg.Checkbox('Only unlabeled', font=defaultFont, default=False, key="cbunlabeled")])
+labels_col.append([sg.Checkbox('Ignore exported', font=defaultFont, default=True, key="cbexported")])
 labels_col.append([
-    sg.Text('Image index: 000000/000000', key="txt_img_index")])
+    sg.Text('Image index: 000000/000000', key="txt_img_index", font=defaultFont)])
 
-labels_col.append([sg.Text('Check on GSV:')])
-labels_col.append([sg.Button('Pano'), sg.Button('Coordinates')])
+labels_col.append([sg.Text('Check on GSV:', font=defaultFont)])
+labels_col.append([sg.Button('Pano', font=defaultFont), sg.Button('Coordinates', font=defaultFont)])
 
 labels_col_header = [labels_header] + labels_col
 
@@ -90,10 +93,10 @@ window = sg.Window('Street Level Imagery Labeler - SLIL',
     return_keyboard_events=False,
     use_default_focus=False).Finalize()
 def on_close():
-    if sg.popup_ok_cancel("Do you really want to exit?", title="Confirm exit") == "OK":
+    if sg.popup_ok_cancel("Do you really want to exit?", title="Confirm exit", font=defaultFont) == "OK":
         if summary_manager.unsaved:
             close_save = sg.\
-                popup_yes_no('There are changes not saved, wish to save them before exiting?')
+                popup_yes_no('There are changes not saved, wish to save them before exiting?', font=defaultFont)
             if close_save == "Yes":
                 save_in_memory()
                 summary_manager.update_summary()
@@ -190,7 +193,7 @@ def increase_sample_index():
             current_sample_index += 1
             current_sample_index %= len(summary_manager.current_labelgui_summary)
             if last_index == current_sample_index:
-                sg.popup_error("No next image found!")
+                sg.popup_error("No next image found!", font=defaultFont)
                 break
             next_sample = summary_manager.current_labelgui_summary.iloc[current_sample_index]
             if ignore_unlabeled:
@@ -264,7 +267,7 @@ def load_sample(index):
         window['txt_img_name'].\
             update((
                 "Image name: "
-                f"{current_img_name}"
+                f"{current_img_name[:14]}..."
             ))
         print(img_name)
         
@@ -344,7 +347,7 @@ while True:
     elif event == 'Export batch':  # Export -> Export batch button
         text = sg.popup_get_text("How many images should be exported?",
                                  title='Export images',
-                                 default_text='1000')
+                                 default_text='1000', font=defaultFont)
         if summary_manager.export_batch(int(text)):
             summary_manager.override_summary()
         continue
@@ -353,15 +356,16 @@ while True:
                                  title="Select summary file",
                                  default_extension=".smr",
                                  file_types=(('Summary file', '.smr'), ('ALL Files', '*.*'),),
+                                 font=defaultFont
                                  )
         summary_manager.merge_summary(text)
         pass
     elif event == 'Choose folder':  # File -> Choose folder button
-        picture_folder = sg.popup_get_folder('Please select a pictures folder')
+        picture_folder = sg.popup_get_folder('Please select a pictures folder', font=defaultFont)
         if picture_folder is not None:
-            sg.popup('Results', 'The value returned from PopupGetFolder', picture_folder)
+            sg.popup('Results', 'The value returned from PopupGetFolder', picture_folder, font=defaultFont)
             if not os.path.exists(picture_folder):
-                sg.popup('The folder', picture_folder, 'couldn\'t be found or is inaccessible!')
+                sg.popup('The folder', picture_folder, 'couldn\'t be found or is inaccessible!', font=defaultFont)
             else:
                 if os.path.isfile(
                     os.path.join(
@@ -377,15 +381,15 @@ while True:
                             f'Labels present in summary: '
                             f'{present_labels}\n'
                             f'Want to insert them in the summary file?'
-                            ))
+                            ), font=defaultFont)
                         if update_summary == "Yes":
                             summary_manager.update_summary_headers(picture_folder)
                         else:
                             sg.popup('Incompatible headers!',
-                            ((
+                            (
                                 f'Please change the labels in summarymanager_config.txt file '
                                 f'to {present_labels} and restart the application.'
-                            )))
+                            ), font=defaultFont)
                             break
                 
                 summary_manager.load_images_folder(picture_folder)
@@ -404,12 +408,12 @@ while True:
         elif event == 'Go to':  # Go to (top menu button)
             text = sg.popup_get_text(f"Go to which image index from {0} up to {current_sample_index}",
                                     title='Go to image',
-                                    default_text='0')
+                                    default_text='0', font=defaultFont)
             if text is not None:
                 sample_index = int(text)
                 load_sample(sample_index)
         elif event == 'Save as labels':
-            text = sg.popup_get_folder('Please select a folder')
+            text = sg.popup_get_folder('Please select a folder', font=defaultFont)
             if text is not None:
                 save_in_memory()
                 summary_manager.update_summary(text)

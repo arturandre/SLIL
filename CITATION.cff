@@ -1,0 +1,13 @@
+cff-version: 1.0.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Oliveira"
+  given-names: "Artur André"
+  orcid: "https://orcid.org/0000-0002-3606-1687"
+- family-names: "Hirata Jr."
+  given-names: "Roberto"
+  orcid: "https://orcid.org/0000-0003-3861-7260"
+title: "Street Level Image Labeler (SLIL)"
+version: 1.0.0
+date-released: 2020-08-15
+url: "https://github.com/arturandre/SLIL"

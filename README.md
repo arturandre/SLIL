@@ -98,3 +98,15 @@ to
 
 `labels = 'Tree,Pole w/ wire,Intersection,Car'`.
 
+## Citation
+If you find the code helpful in your resarch or work, please cite the following software.
+```
+@software{Oliveira_Street_Level_Image_2020,
+author = {Oliveira, Artur André and Hirata Jr., Roberto},
+month = aug,
+title = {{Street Level Image Labeler (SLIL)}},
+url = {https://github.com/arturandre/SLIL},
+version = {1.0.0},
+year = {2020}
+}
+```

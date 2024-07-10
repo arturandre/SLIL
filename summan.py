@@ -13,6 +13,7 @@ class SummaryManager:
         self.current_labelgui_summary_dirpath = None
         self.current_labelgui_summary_filepath = None
         self.current_labelgui_summary = None
+        self.text_folder = None
         # custom configs
         self.summary_filename_no_ext = \
             custom_config.get('summary_filename_no_ext')\

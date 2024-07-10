@@ -13,6 +13,7 @@ import clipboard
 
 menu_def = [['&File',
     ['&Choose folder',
+     'Choose text folder',
     'S&ave labels',
     '&Save as labels',
     '&Load labels',
@@ -26,6 +27,40 @@ menu_def = [['&File',
 ]
 
 from summan import SummaryManager
+from summan_captions import get_image_captions
+
+text_window = None
+
+def open_new_window(image_name, gt_answers_path, pred_answers_path):
+    global text_window
+
+    question, answers_gt, answers_pred = get_image_captions(image_name, gt_answers_path, pred_answers_path)
+
+    if question is None or answers_gt is None or answers_pred is None:
+        sg.popup("No data found for the selected image.")
+        return
+
+    if text_window is None:
+        layout = [
+            [sg.Multiline(question, size=(80, 5), disabled=True, key='-QUESTION-')],
+            [sg.Multiline(answers_gt, size=(40, 15), disabled=True, key='-ANSWERS_GT-'),
+             sg.Multiline(answers_pred, size=(40, 15), disabled=True, key='-ANSWERS_PRED-')],
+            [sg.Button('Close')]
+        ]
+
+        text_window = sg.Window("Comparison Window", layout, finalize=True, modal=False)
+    else:
+        text_window['-QUESTION-'].update(question)
+        text_window['-ANSWERS_GT-'].update(answers_gt)
+        text_window['-ANSWERS_PRED-'].update(answers_pred)
+
+    # while True:
+    #     event, values = window.read()
+    #     if event in (sg.WIN_CLOSED, 'Close'):
+    #         break
+
+    # window.close()
+
 
 sg.theme('DarkAmber')  # Add a touch of color
 
@@ -92,6 +127,8 @@ window = sg.Window('Street Level Imagery Labeler - SLIL',
     layout,
     return_keyboard_events=False,
     use_default_focus=False).Finalize()
+
+
 def on_close():
     if sg.popup_ok_cancel("Do you really want to exit?", title="Confirm exit", font=defaultFont) == "OK":
         if summary_manager.unsaved:
@@ -244,15 +281,34 @@ def load_sample(index):
             img_name)
         #_panoid_-zFcDmsqVM0Sfw0yQSzlcg_heading_135_pitch_-4
         current_sample_index = index
-        heading_idx = img_name.index("_heading_")
-        pitch_idx = img_name.index("_pitch_")
-        current_pano = img_name[len("_panoid_"):heading_idx]
-        current_heading = img_name\
-            [(heading_idx + len("_heading_")):pitch_idx]
-        current_pitch = img_name\
-            [(pitch_idx+len("_pitch_")):img_name.index(".png")]
+        
+        try:
+            heading_idx = img_name.index("_heading_")
+        except ValueError:
+            heading_idx = 0
+
+        try:
+            pitch_idx = img_name.index("_pitch_")
+        except ValueError:
+            pitch_idx = 0
+
+        try:
+            current_pano = img_name[len("_panoid_"):heading_idx]
+        except ValueError:
+            current_pano = "0"
+
+        try:
+            current_heading = img_name[(heading_idx + len("_heading_")):pitch_idx]
+        except ValueError:
+            current_heading = 0
+
+        try:
+            current_pitch = img_name[(pitch_idx + len("_pitch_")):img_name.index(".png")]
+        except ValueError:
+            current_pitch = 0
         
         image = Image.open(imgFilename)
+        image = image.resize((512, 512), Image.ANTIALIAS)
         photo = ImageTk.PhotoImage(image)
         sgImage.update(data=photo)
         set_sample_labels(index)
@@ -270,6 +326,8 @@ def load_sample(index):
                 f"{current_img_name[:14]}..."
             ))
         print(img_name)
+    if summary_manager.text_folder is not None:
+        open_new_window(current_img_name, summary_manager.text_folder, summary_manager.text_folder)
         
     pass
 
@@ -327,7 +385,7 @@ def check_label_checkbox(label_index, label_decision, mouse_click=False):
 # Event Loop to process "events" and get the "values" of the inputs
 while True:
     # Needed to detect when the "X" close button is pressed
-    event, values = window.read()
+    event, values = window.read(timeout=100)
     
     event_str = str(event)
     print((
@@ -363,7 +421,7 @@ while True:
     elif event == 'Choose folder':  # File -> Choose folder button
         picture_folder = sg.popup_get_folder('Please select a pictures folder', font=defaultFont)
         if picture_folder is not None:
-            sg.popup('Results', 'The value returned from PopupGetFolder', picture_folder, font=defaultFont)
+            #sg.popup('Results', 'The value returned from PopupGetFolder', picture_folder, font=defaultFont)
             if not os.path.exists(picture_folder):
                 sg.popup('The folder', picture_folder, 'couldn\'t be found or is inaccessible!', font=defaultFont)
             else:
@@ -398,6 +456,15 @@ while True:
                     current_sample_index = 0
                     load_sample(current_sample_index)
                     
+    elif event == 'Choose text folder':  # File -> Choose text folder button
+        #TODO: Make sure it can only be selected after a picture folder is selected
+        texts_folder = sg.popup_get_folder('Please select a text folder', font=defaultFont)
+        if texts_folder is not None:
+            if not os.path.exists(texts_folder):
+                sg.popup('The folder', texts_folder, 'couldn\'t be found or is inaccessible!', font=defaultFont)
+            else:
+                summary_manager.text_folder = texts_folder
+
     elif summary_manager.is_summary_loaded():
         if window["cbautosave"].get():
             save_in_memory()
@@ -487,6 +554,14 @@ while True:
                 decrease_sample_index()
             elif window.user_bind_event.keysym == 'Right': # Enter keys:
                 increase_sample_index()
+    if text_window is not None:
+        event_text, values_text = text_window.read(timeout=100)
+        if event_text in (sg.WIN_CLOSED, 'Close'):
+            text_window.close()
+            text_window = None
+
+
+    
         
 
 

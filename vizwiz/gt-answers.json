@@ -1,0 +1,98 @@
+[
+  {
+    "image": "VizWiz_val_00000000.jpg",
+    "question": "Ok. There is another picture I hope it is a better one.",
+    "answers": [
+      {
+        "answer": "unanswerable",
+        "answer_confidence": "yes"
+      },
+      {
+        "answer": "unanswerable",
+        "answer_confidence": "yes"
+      },
+      {
+        "answer": "unanswerable",
+        "answer_confidence": "yes"
+      },
+      {
+        "answer": "unanswerable",
+        "answer_confidence": "yes"
+      },
+      {
+        "answer": "unanswerable",
+        "answer_confidence": "maybe"
+      },
+      {
+        "answer": "unanswerable",
+        "answer_confidence": "yes"
+      },
+      {
+        "answer": "unanswerable",
+        "answer_confidence": "yes"
+      },
+      {
+        "answer": "unanswerable",
+        "answer_confidence": "no"
+      },
+      {
+        "answer": "cannot repair this computer automatically",
+        "answer_confidence": "maybe"
+      },
+      {
+        "answer": "blank screen",
+        "answer_confidence": "yes"
+      }
+    ],
+    "answer_type": "unanswerable",
+    "answerable": 0
+  },
+  {
+    "image": "VizWiz_val_00000001.jpg",
+    "question": "Can you tell me what this medicine is please?",
+    "answers": [
+      {
+        "answer": "no",
+        "answer_confidence": "yes"
+      },
+      {
+        "answer": "unanswerable",
+        "answer_confidence": "yes"
+      },
+      {
+        "answer": "night time",
+        "answer_confidence": "maybe"
+      },
+      {
+        "answer": "unanswerable",
+        "answer_confidence": "yes"
+      },
+      {
+        "answer": "night time",
+        "answer_confidence": "maybe"
+      },
+      {
+        "answer": "night time cold medicine",
+        "answer_confidence": "maybe"
+      },
+      {
+        "answer": "night time",
+        "answer_confidence": "maybe"
+      },
+      {
+        "answer": "night time",
+        "answer_confidence": "maybe"
+      },
+      {
+        "answer": "night time",
+        "answer_confidence": "maybe"
+      },
+      {
+        "answer": "night time medicine",
+        "answer_confidence": "yes"
+      }
+    ],
+    "answer_type": "other",
+    "answerable": 1
+  }
+]

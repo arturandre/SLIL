@@ -1,0 +1,12 @@
+[
+  {
+    "image": "VizWiz_val_00000000.jpg",
+    "question": "Ok. There is another picture I hope it is a better one. If the image is blurry, occluded, or have some complications that make it impossible to answer confidently the question say \"Unanswerable\".",
+    "answer": "Yes, I am ready to help you with the new image.</s>"
+  },
+  {
+    "image": "VizWiz_val_00000001.jpg",
+    "question": "Can you tell me what this medicine is please? If the image is blurry, occluded, or have some complications that make it impossible to answer confidently the question say \"Unanswerable\".",
+    "answer": "The medicine is called Night Time.</s>"
+  }
+]

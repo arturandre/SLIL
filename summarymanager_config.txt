@@ -13,8 +13,9 @@ summary_filename_ext = '.smr'
 # The labels to be created. Notice that this
 # changing labels for a already existing summary
 # is not possible without editing it externally.
-labels = 'Tree,Pole w/ wire,Intersection>(Tree+Pole w/ wire)'
+#labels = 'Tree,Pole w/ wire,Intersection>(Tree+Pole w/ wire)'
 #labels = 'Incorrect,Confusing,Perspective Hard,Distant'
+labels = 'Acceptable'
 
 # The exported summary default name
 export_summary_basename = 'exported'

@@ -6,9 +6,9 @@ import pandas as pd
 
 class SummaryManager:
     unlabeled_code = '-10'
-    positive_label = '1'
-    negative_label = '-1'
-    uncertain_label = '0'
+    #positive_label = '1'
+    #negative_label = '-1'
+    #uncertain_label = '0'
     def __init__(self, custom_config={}):
         self.current_labelgui_summary_dirpath = None
         self.current_labelgui_summary_filepath = None

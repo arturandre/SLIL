@@ -82,18 +82,19 @@ img_col.append([
 labels_col = []
 
 unlabeled_code = '-10'
-positive_label = '1'
-negative_label = '-1'
-uncertain_label = '0'
+#positive_label = '1'
+#negative_label = '-1'
+#uncertain_label = '0'
 
 pressedNum = None
 waiting_decision = False
 
 summary_manager = SummaryManager()
 labels_header = [
-    sg.Text('-1   ', font=defaultFont),
-    sg.Text('0   ', font=defaultFont),
-    sg.Text('1', font=defaultFont),
+    sg.Text('U    ', font=defaultFont),
+    sg.Text('N   ', font=defaultFont),
+    sg.Text('A', font=defaultFont),
+    sg.Text('X', font=defaultFont),
     ]
 
 for i, label in enumerate(summary_manager.labels):
@@ -101,6 +102,7 @@ for i, label in enumerate(summary_manager.labels):
         sg.Radio('', f"label{i}", enable_events=True, key=f'label_n{i}', font=defaultFont),
         sg.Radio('', f"label{i}", enable_events=True, key=f'label_u{i}', font=defaultFont),
         sg.Radio('', f"label{i}", enable_events=True, key=f'label_p{i}', font=defaultFont),
+        sg.Radio('', f"label{i}", enable_events=True, key=f'label_x{i}', font=defaultFont),
         sg.Text(label, font=defaultFont),
         sg.Text('*', key=f'unlabeled_{i}', font=defaultFont),
         ])
@@ -254,9 +256,9 @@ def set_sample_labels(index):
             # Radio buttons
             line_idx = current_label[0]
             label_line = labels_col[line_idx]
-            label = int(current_label[1]) #-10, -1, 0, 1
+            label = int(current_label[1]) #-10, -1, 0, 1, 2
             if label != -10:
-                decision_idx = label +1 # 0, 1, 2
+                decision_idx = label +1 # 0, 1, 2, 3
                 label_line[decision_idx].update(True)
             else:
                 # Hack to reset radio buttons
@@ -308,7 +310,7 @@ def load_sample(index):
             current_pitch = 0
         
         image = Image.open(imgFilename)
-        image = image.resize((512, 512), Image.ANTIALIAS)
+        image = image.resize((512, 512))
         photo = ImageTk.PhotoImage(image)
         sgImage.update(data=photo)
         set_sample_labels(index)
@@ -340,16 +342,18 @@ def save_in_memory():
             sel_labels.append(0)
         elif rb_line[2].get(): #1
             sel_labels.append(1)
+        elif rb_line[3].get(): #2
+            sel_labels.append(2)
         else:  #unlabeled
             sel_labels.append(-10)
     summary_manager.\
         save_sample_labels(current_sample_index, sel_labels)
 
 def check_label_checkbox(label_index, label_decision, mouse_click=False):
-    if label_decision not in ['n', 'u', 'p']:
-        raise Exception('Unrecognized decision: {label_decision}, expected: [n, u, p].')
+    if label_decision not in ['n', 'u', 'p', 'x']:
+        raise Exception('Unrecognized decision: {label_decision}, expected: [n, u, p, x].')
     sel_radio_line = labels_col[label_index]
-    label_decision_idx = ['n', 'u', 'p'].index(label_decision) #0, 1, 2
+    label_decision_idx = ['n', 'u', 'p', 'x'].index(label_decision) #-1, 0, 1, 2
     label_decision = label_decision_idx -1 # -1, 0, 1
     sel_radio = sel_radio_line[label_decision_idx]
     sel_radio.update(True)
@@ -543,9 +547,9 @@ while True:
                     waiting_decision = True
                     pressedNum = int(window.user_bind_event.char) - 1
                     
-                elif waiting_decision and (window.user_bind_event.char in ['a', 's', 'd']):
-                    decision = ['a', 's', 'd'].index(window.user_bind_event.char)
-                    decision = ['n', 'u', 'p'][decision]
+                elif waiting_decision and (window.user_bind_event.char in ['a', 's', 'd', 'f']):
+                    decision = ['a', 's', 'd', 'f'].index(window.user_bind_event.char)
+                    decision = ['n', 'u', 'p', 'x'][decision]
                     if (pressedNum >= 0) and (pressedNum < len(summary_manager.labels)):
                         check_label_checkbox(pressedNum, decision)
                 if not window.user_bind_event.char.isdigit():  # Number keys

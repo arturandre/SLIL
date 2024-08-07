@@ -47,10 +47,10 @@ img_col.append([
 
 labels_col = []
 
-unlabeled_code = '-10'
-positive_label = '1'
-negative_label = '-1'
-uncertain_label = '0'
+#unlabeled_code = '-10'
+#positive_label = '1'
+#negative_label = '-1'
+#uncertain_label = '0'
 
 pressedNum = None
 waiting_decision = False

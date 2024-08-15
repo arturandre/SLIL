@@ -15,7 +15,7 @@ summary_filename_ext = '.smr'
 # is not possible without editing it externally.
 #labels = 'Tree,Pole w/ wire,Intersection>(Tree+Pole w/ wire)'
 #labels = 'Incorrect,Confusing,Perspective Hard,Distant'
-labels = 'Acceptable'
+labels = 'Acceptable,Matches GT'
 
 # The exported summary default name
 export_summary_basename = 'exported'

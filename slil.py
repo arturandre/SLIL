@@ -30,29 +30,65 @@ from summan import SummaryManager
 from summan_captions import get_image_captions
 
 text_window = None
+current_questions = []
+current_answers_gt = []
+current_answers_pred = []
+current_question_idx = -1
+num_questions = -1
 
+def change_question_index(question_idx):
+    global text_window, current_questions, current_answers_gt
+    global current_answers_pred, current_question_idx, num_questions
+    current_question_idx = question_idx
+
+    if text_window is None:
+        sg.popup("Change change the question without selecting a text folder!")
+    else:
+        text_window['-QUESTION-'].update(current_questions[current_question_idx])
+        text_window['-ANSWERS_GT-'].update(current_answers_gt[current_question_idx])
+        text_window['-ANSWERS_PRED-'].update(current_answers_pred[current_question_idx])
+
+    
 def open_new_window(image_name, gt_answers_path, pred_answers_path):
-    global text_window
+    global text_window, current_questions, current_answers_gt
+    global current_answers_pred, current_question_idx, num_questions
 
-    question, answers_gt, answers_pred = get_image_captions(image_name, gt_answers_path, pred_answers_path)
+    questions, answers_gt, answers_pred =\
+        get_image_captions(image_name, gt_answers_path, pred_answers_path)
+    current_questions = questions
+    current_answers_gt = answers_gt
+    current_answers_pred = answers_pred
+    num_questions = len(questions)
+    current_question_idx = 0
+    if len(current_answers_gt) == 0:
+        current_answers_gt = [""]*num_questions
+    if len(current_answers_pred) == 0:
+        current_answers_pred = [""]*num_questions
+    
+    #question = "" if question is None else question
+    #answers_gt = "" if answers_gt is None else answers_gt
+    #answers_pred = "" if answers_pred is None else answers_pred
 
-    if question is None or answers_gt is None or answers_pred is None:
-        sg.popup("No data found for the selected image.")
-        return
+    #if question is None or answers_gt is None or answers_pred is None:
+    #    sg.popup("No data found for the selected image.")
+    #    return
 
     if text_window is None:
         layout = [
-            [sg.Multiline(question, size=(80, 5), disabled=True, key='-QUESTION-')],
-            [sg.Multiline(answers_gt, size=(40, 15), disabled=True, key='-ANSWERS_GT-'),
-             sg.Multiline(answers_pred, size=(40, 15), disabled=True, key='-ANSWERS_PRED-')],
+            [sg.Multiline(current_questions[current_question_idx],
+                          size=(80, 5), disabled=True, key='-QUESTION-')],
+            [sg.Multiline(current_answers_gt[current_question_idx],
+                          size=(40, 15), disabled=True, key='-ANSWERS_GT-'),
+             sg.Multiline(current_answers_pred[current_question_idx],
+                          size=(40, 15), disabled=True, key='-ANSWERS_PRED-')],
             [sg.Button('Close')]
         ]
 
         text_window = sg.Window("Comparison Window", layout, finalize=True, modal=False)
     else:
-        text_window['-QUESTION-'].update(question)
-        text_window['-ANSWERS_GT-'].update(answers_gt)
-        text_window['-ANSWERS_PRED-'].update(answers_pred)
+        text_window['-QUESTION-'].update(current_questions[current_question_idx])
+        text_window['-ANSWERS_GT-'].update(current_answers_gt[current_question_idx])
+        text_window['-ANSWERS_PRED-'].update(current_answers_pred[current_question_idx])
 
     # while True:
     #     event, values = window.read()
@@ -558,6 +594,14 @@ while True:
                 decrease_sample_index()
             elif window.user_bind_event.keysym == 'Right': # Enter keys:
                 increase_sample_index()
+            elif window.user_bind_event.keysym == 'Up': # Enter keys:
+                if num_questions > 0:
+                    question_idx = (current_question_idx+1)%num_questions
+                    change_question_index(question_idx)
+            elif window.user_bind_event.keysym == 'Down': # Enter keys:
+                if num_questions > 0:
+                    question_idx = (current_question_idx-1)%num_questions
+                    change_question_index(question_idx)
     if text_window is not None:
         event_text, values_text = text_window.read(timeout=100)
         if event_text in (sg.WIN_CLOSED, 'Close'):

@@ -1,3 +1,11 @@
-img_name,lat,lon,heading,pitch,timestamp,status,Acceptable
-VizWiz_val_00000000.jpg,missing,missing,val,z_val_00000000,missing,free,0
-VizWiz_val_00000001.jpg,missing,missing,val,z_val_00000001,missing,free,2
+img_name,lat,lon,heading,pitch,timestamp,status,Acceptable,Matches GT
+VizWiz_val_00000000.jpg,missing,missing,val,z_val_00000000,missing,free,0,-10
+VizWiz_val_00000001.jpg,missing,missing,val,z_val_00000001,missing,free,2,-10
+VizWiz_val_00000002.jpg,missing,missing,val,z_val_00000002,missing,free,-10,-10
+VizWiz_val_00000003.jpg,missing,missing,val,z_val_00000003,missing,free,-10,-10
+VizWiz_val_00000004.jpg,missing,missing,val,z_val_00000004,missing,free,-10,-10
+VizWiz_val_00000005.jpg,missing,missing,val,z_val_00000005,missing,free,-10,-10
+VizWiz_val_00000006.jpg,missing,missing,val,z_val_00000006,missing,free,-10,-10
+VizWiz_val_00000007.jpg,missing,missing,val,z_val_00000007,missing,free,-10,-10
+VizWiz_val_00000008.jpg,missing,missing,val,z_val_00000008,missing,free,-10,-10
+VizWiz_val_00000009.jpg,missing,missing,val,z_val_00000009,missing,free,-10,-10

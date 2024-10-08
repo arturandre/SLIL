@@ -445,7 +445,9 @@ class SummaryManager:
             '.xbm','.xfac','.xl','.xmv','.xpm','.xw','.','.y4m','.yop',
             '.yuv','.yuv10']
         self.current_labelgui_summary_dirpath = folder_path
-        for f in os.listdir(folder_path):
+        all_files = os.listdir(folder_path)
+        all_files.sort()
+        for f in all_files:
             for ext in EXTENSIONS:
                 if f.endswith(ext):
                     self.img_filenames.append(f)

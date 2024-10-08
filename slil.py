@@ -52,6 +52,8 @@ def change_question_index(question_idx):
 def open_new_window(image_name, gt_answers_path, pred_answers_path):
     global text_window, current_questions, current_answers_gt
     global current_answers_pred, current_question_idx, num_questions
+    gt_answers_path = gt_answers_path.replace('/', os.sep)
+    pred_answers_path = pred_answers_path.replace('/', os.sep)
 
     questions, answers_gt, answers_pred =\
         get_image_captions(image_name, gt_answers_path, pred_answers_path)

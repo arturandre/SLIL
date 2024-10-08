@@ -27,7 +27,7 @@ def get_image_captions(image_name, gt_answers_path, pred_answers_path):
 
     if os.path.exists(pred_answers_path):
         pred_data = load_json(pred_answers_path)
-        pred_entry = [(item for item in pred_data if item["image"] == image_name)]
+        pred_entry = [item for item in pred_data if item["image"] == image_name][0]
         answer_pred = pred_entry.get('answer', '')
         answers_pred.append(answer_pred)
 

@@ -427,7 +427,10 @@ def check_label_checkbox(label_index, label_decision, mouse_click=False):
 # Event Loop to process "events" and get the "values" of the inputs
 while True:
     # Needed to detect when the "X" close button is pressed
-    event, values = window.read(timeout=100)
+    try:
+        event, values = window.read(timeout=100)
+    except SystemExit:
+        pass # Just exiting
     
     event_str = str(event)
     print((
@@ -605,7 +608,10 @@ while True:
                     question_idx = (current_question_idx-1)%num_questions
                     change_question_index(question_idx)
     if text_window is not None:
-        event_text, values_text = text_window.read(timeout=100)
+        try:
+            event_text, values_text = text_window.read(timeout=100)
+        except SystemExit:
+            pass # Just exiting
         if event_text in (sg.WIN_CLOSED, 'Close'):
             text_window.close()
             text_window = None
